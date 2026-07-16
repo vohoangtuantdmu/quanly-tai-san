@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ThuChiIndexRouteImport } from './routes/thu-chi.index'
+import { Route as TaiSanIndexRouteImport } from './routes/tai-san.index'
+import { Route as RaoBanIndexRouteImport } from './routes/rao-ban.index'
+import { Route as NhacLichIndexRouteImport } from './routes/nhac-lich.index'
+import { Route as HopDongIndexRouteImport } from './routes/hop-dong.index'
+import { Route as DoiTacIndexRouteImport } from './routes/doi-tac.index'
+import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
+import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
+import { Route as HopDongMoiRouteImport } from './routes/hop-dong.moi'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ThuChiIndexRoute = ThuChiIndexRouteImport.update({
+  id: '/thu-chi/',
+  path: '/thu-chi/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaiSanIndexRoute = TaiSanIndexRouteImport.update({
+  id: '/tai-san/',
+  path: '/tai-san/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RaoBanIndexRoute = RaoBanIndexRouteImport.update({
+  id: '/rao-ban/',
+  path: '/rao-ban/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NhacLichIndexRoute = NhacLichIndexRouteImport.update({
+  id: '/nhac-lich/',
+  path: '/nhac-lich/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HopDongIndexRoute = HopDongIndexRouteImport.update({
+  id: '/hop-dong/',
+  path: '/hop-dong/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoiTacIndexRoute = DoiTacIndexRouteImport.update({
+  id: '/doi-tac/',
+  path: '/doi-tac/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaiSanMoiRoute = TaiSanMoiRouteImport.update({
+  id: '/tai-san/moi',
+  path: '/tai-san/moi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaiSanIdRoute = TaiSanIdRouteImport.update({
+  id: '/tai-san/$id',
+  path: '/tai-san/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HopDongMoiRoute = HopDongMoiRouteImport.update({
+  id: '/hop-dong/moi',
+  path: '/hop-dong/moi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/hop-dong/moi': typeof HopDongMoiRoute
+  '/tai-san/$id': typeof TaiSanIdRoute
+  '/tai-san/moi': typeof TaiSanMoiRoute
+  '/doi-tac/': typeof DoiTacIndexRoute
+  '/hop-dong/': typeof HopDongIndexRoute
+  '/nhac-lich/': typeof NhacLichIndexRoute
+  '/rao-ban/': typeof RaoBanIndexRoute
+  '/tai-san/': typeof TaiSanIndexRoute
+  '/thu-chi/': typeof ThuChiIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/hop-dong/moi': typeof HopDongMoiRoute
+  '/tai-san/$id': typeof TaiSanIdRoute
+  '/tai-san/moi': typeof TaiSanMoiRoute
+  '/doi-tac': typeof DoiTacIndexRoute
+  '/hop-dong': typeof HopDongIndexRoute
+  '/nhac-lich': typeof NhacLichIndexRoute
+  '/rao-ban': typeof RaoBanIndexRoute
+  '/tai-san': typeof TaiSanIndexRoute
+  '/thu-chi': typeof ThuChiIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/hop-dong/moi': typeof HopDongMoiRoute
+  '/tai-san/$id': typeof TaiSanIdRoute
+  '/tai-san/moi': typeof TaiSanMoiRoute
+  '/doi-tac/': typeof DoiTacIndexRoute
+  '/hop-dong/': typeof HopDongIndexRoute
+  '/nhac-lich/': typeof NhacLichIndexRoute
+  '/rao-ban/': typeof RaoBanIndexRoute
+  '/tai-san/': typeof TaiSanIndexRoute
+  '/thu-chi/': typeof ThuChiIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/hop-dong/moi'
+    | '/tai-san/$id'
+    | '/tai-san/moi'
+    | '/doi-tac/'
+    | '/hop-dong/'
+    | '/nhac-lich/'
+    | '/rao-ban/'
+    | '/tai-san/'
+    | '/thu-chi/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/hop-dong/moi'
+    | '/tai-san/$id'
+    | '/tai-san/moi'
+    | '/doi-tac'
+    | '/hop-dong'
+    | '/nhac-lich'
+    | '/rao-ban'
+    | '/tai-san'
+    | '/thu-chi'
+  id:
+    | '__root__'
+    | '/'
+    | '/hop-dong/moi'
+    | '/tai-san/$id'
+    | '/tai-san/moi'
+    | '/doi-tac/'
+    | '/hop-dong/'
+    | '/nhac-lich/'
+    | '/rao-ban/'
+    | '/tai-san/'
+    | '/thu-chi/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HopDongMoiRoute: typeof HopDongMoiRoute
+  TaiSanIdRoute: typeof TaiSanIdRoute
+  TaiSanMoiRoute: typeof TaiSanMoiRoute
+  DoiTacIndexRoute: typeof DoiTacIndexRoute
+  HopDongIndexRoute: typeof HopDongIndexRoute
+  NhacLichIndexRoute: typeof NhacLichIndexRoute
+  RaoBanIndexRoute: typeof RaoBanIndexRoute
+  TaiSanIndexRoute: typeof TaiSanIndexRoute
+  ThuChiIndexRoute: typeof ThuChiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +169,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/thu-chi/': {
+      id: '/thu-chi/'
+      path: '/thu-chi'
+      fullPath: '/thu-chi/'
+      preLoaderRoute: typeof ThuChiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/': {
+      id: '/tai-san/'
+      path: '/tai-san'
+      fullPath: '/tai-san/'
+      preLoaderRoute: typeof TaiSanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rao-ban/': {
+      id: '/rao-ban/'
+      path: '/rao-ban'
+      fullPath: '/rao-ban/'
+      preLoaderRoute: typeof RaoBanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nhac-lich/': {
+      id: '/nhac-lich/'
+      path: '/nhac-lich'
+      fullPath: '/nhac-lich/'
+      preLoaderRoute: typeof NhacLichIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hop-dong/': {
+      id: '/hop-dong/'
+      path: '/hop-dong'
+      fullPath: '/hop-dong/'
+      preLoaderRoute: typeof HopDongIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doi-tac/': {
+      id: '/doi-tac/'
+      path: '/doi-tac'
+      fullPath: '/doi-tac/'
+      preLoaderRoute: typeof DoiTacIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/moi': {
+      id: '/tai-san/moi'
+      path: '/tai-san/moi'
+      fullPath: '/tai-san/moi'
+      preLoaderRoute: typeof TaiSanMoiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/$id': {
+      id: '/tai-san/$id'
+      path: '/tai-san/$id'
+      fullPath: '/tai-san/$id'
+      preLoaderRoute: typeof TaiSanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hop-dong/moi': {
+      id: '/hop-dong/moi'
+      path: '/hop-dong/moi'
+      fullPath: '/hop-dong/moi'
+      preLoaderRoute: typeof HopDongMoiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HopDongMoiRoute: HopDongMoiRoute,
+  TaiSanIdRoute: TaiSanIdRoute,
+  TaiSanMoiRoute: TaiSanMoiRoute,
+  DoiTacIndexRoute: DoiTacIndexRoute,
+  HopDongIndexRoute: HopDongIndexRoute,
+  NhacLichIndexRoute: NhacLichIndexRoute,
+  RaoBanIndexRoute: RaoBanIndexRoute,
+  TaiSanIndexRoute: TaiSanIndexRoute,
+  ThuChiIndexRoute: ThuChiIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
