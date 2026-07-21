@@ -13,12 +13,10 @@ function LoadingScreen() {
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const search = useRouterState({ select: (s) => s.location.searchStr });
+  const href = useRouterState({ select: (s) => s.location.href });
   if (isLoading) return <LoadingScreen />;
   if (!isAuthenticated) {
-    const redirect = encodeURIComponent(pathname + (search || ""));
-    return <Navigate to="/login" search={{ redirect }} />;
+    return <Navigate to="/login" search={{ redirect: href }} />;
   }
   return <>{children}</>;
 }
