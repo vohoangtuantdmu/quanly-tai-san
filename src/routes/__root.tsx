@@ -108,23 +108,39 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full bg-background">
-            <AppSidebar />
-            <div className="flex flex-1 flex-col min-w-0">
-              <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/80 backdrop-blur px-4">
-                <SidebarTrigger />
-                <div className="text-sm text-muted-foreground">Nền tảng Quản Lý Tài Sản</div>
-              </header>
-              <main className="flex-1 min-w-0">
-                <Outlet />
-              </main>
-            </div>
-          </div>
+      <AuthProvider>
+        <StoreProvider>
+          <AppShell />
           <Toaster position="top-right" richColors />
-        </SidebarProvider>
-      </StoreProvider>
+        </StoreProvider>
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (isPublicPath(pathname)) {
+    return <Outlet />;
+  }
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col min-w-0">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/80 backdrop-blur px-4">
+            <SidebarTrigger />
+            <div className="flex-1 text-sm text-muted-foreground">Nền tảng Quản Lý Tài Sản</div>
+            <UserMenu />
+          </header>
+          <EmailNotConfirmedBanner />
+          <main className="flex-1 min-w-0">
+            <ProtectedRoute>
+              <Outlet />
+            </ProtectedRoute>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
