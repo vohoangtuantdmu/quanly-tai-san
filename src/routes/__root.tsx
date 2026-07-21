@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, Link, createRootRouteWithContext, useRouter,
+  Outlet, Link, createRootRouteWithContext, useRouter, useRouterState,
   HeadContent, Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
@@ -8,9 +8,18 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { StoreProvider } from "@/lib/store";
+import { AuthProvider } from "@/lib/auth/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { EmailNotConfirmedBanner } from "@/components/auth/EmailNotConfirmedBanner";
+import { UserMenu } from "@/components/layout/UserMenu";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+
+const PUBLIC_PREFIXES = ["/login", "/register", "/forgot-password", "/reset-password", "/confirm-email", "/403"];
+function isPublicPath(p: string) {
+  return PUBLIC_PREFIXES.some((x) => p === x || p.startsWith(x + "/"));
+}
 
 function NotFoundComponent() {
   return (

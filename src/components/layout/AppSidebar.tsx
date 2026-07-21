@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Building2, FileText, Users, Wallet, Bell, Tag, Building,
+  LayoutDashboard, Building2, FileText, Users, Wallet, Bell, Tag, Building, ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 const items = [
   { title: "Tổng quan", url: "/", icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const items = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { isAdmin } = useAuth();
   const isActive = (u: string) => u === "/" ? pathname === "/" : pathname.startsWith(u);
 
   return (
@@ -52,6 +54,24 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Quản trị</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive("/admin")} tooltip="Duyệt tin đăng">
+                    <Link to="/admin/properties">
+                      <ShieldCheck />
+                      <span>Duyệt tin đăng</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );
