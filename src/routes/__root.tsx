@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, Link, createRootRouteWithContext, useRouter,
+  Outlet, Link, createRootRouteWithContext, useRouter, useRouterState,
   HeadContent, Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
@@ -8,9 +8,18 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { StoreProvider } from "@/lib/store";
+import { AuthProvider } from "@/lib/auth/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { EmailNotConfirmedBanner } from "@/components/auth/EmailNotConfirmedBanner";
+import { UserMenu } from "@/components/layout/UserMenu";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+
+const PUBLIC_PREFIXES = ["/login", "/register", "/forgot-password", "/reset-password", "/confirm-email", "/403"];
+function isPublicPath(p: string) {
+  return PUBLIC_PREFIXES.some((x) => p === x || p.startsWith(x + "/"));
+}
 
 function NotFoundComponent() {
   return (
@@ -99,23 +108,39 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full bg-background">
-            <AppSidebar />
-            <div className="flex flex-1 flex-col min-w-0">
-              <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/80 backdrop-blur px-4">
-                <SidebarTrigger />
-                <div className="text-sm text-muted-foreground">Nền tảng Quản Lý Tài Sản</div>
-              </header>
-              <main className="flex-1 min-w-0">
-                <Outlet />
-              </main>
-            </div>
-          </div>
+      <AuthProvider>
+        <StoreProvider>
+          <AppShell />
           <Toaster position="top-right" richColors />
-        </SidebarProvider>
-      </StoreProvider>
+        </StoreProvider>
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (isPublicPath(pathname)) {
+    return <Outlet />;
+  }
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col min-w-0">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/80 backdrop-blur px-4">
+            <SidebarTrigger />
+            <div className="flex-1 text-sm text-muted-foreground">Nền tảng Quản Lý Tài Sản</div>
+            <UserMenu />
+          </header>
+          <EmailNotConfirmedBanner />
+          <main className="flex-1 min-w-0">
+            <ProtectedRoute>
+              <Outlet />
+            </ProtectedRoute>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }

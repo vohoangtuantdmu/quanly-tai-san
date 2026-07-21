@@ -9,6 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ConfirmEmailRouteImport } from './routes/confirm-email'
+import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ThuChiIndexRouteImport } from './routes/thu-chi.index'
 import { Route as TaiSanIndexRouteImport } from './routes/tai-san.index'
@@ -19,7 +26,43 @@ import { Route as DoiTacIndexRouteImport } from './routes/doi-tac.index'
 import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
 import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
 import { Route as HopDongMoiRouteImport } from './routes/hop-dong.moi'
+import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmEmailRoute = ConfirmEmailRouteImport.update({
+  id: '/confirm-email',
+  path: '/confirm-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R403Route = R403RouteImport.update({
+  id: '/403',
+  path: '/403',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -70,9 +113,22 @@ const HopDongMoiRoute = HopDongMoiRouteImport.update({
   path: '/hop-dong/moi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
+  id: '/admin/properties',
+  path: '/admin/properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/403': typeof R403Route
+  '/confirm-email': typeof ConfirmEmailRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
@@ -85,6 +141,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/403': typeof R403Route
+  '/confirm-email': typeof ConfirmEmailRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
@@ -98,6 +162,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/403': typeof R403Route
+  '/confirm-email': typeof ConfirmEmailRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
@@ -112,6 +184,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/403'
+    | '/confirm-email'
+    | '/forgot-password'
+    | '/login'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/admin/properties'
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
@@ -124,6 +204,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/403'
+    | '/confirm-email'
+    | '/forgot-password'
+    | '/login'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/admin/properties'
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
@@ -136,6 +224,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/403'
+    | '/confirm-email'
+    | '/forgot-password'
+    | '/login'
+    | '/profile'
+    | '/register'
+    | '/reset-password'
+    | '/admin/properties'
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
@@ -149,6 +245,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R403Route: typeof R403Route
+  ConfirmEmailRoute: typeof ConfirmEmailRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRoute
+  RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  AdminPropertiesRoute: typeof AdminPropertiesRoute
   HopDongMoiRoute: typeof HopDongMoiRoute
   TaiSanIdRoute: typeof TaiSanIdRoute
   TaiSanMoiRoute: typeof TaiSanMoiRoute
@@ -162,6 +266,55 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirm-email': {
+      id: '/confirm-email'
+      path: '/confirm-email'
+      fullPath: '/confirm-email'
+      preLoaderRoute: typeof ConfirmEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/403': {
+      id: '/403'
+      path: '/403'
+      fullPath: '/403'
+      preLoaderRoute: typeof R403RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -232,11 +385,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HopDongMoiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/properties': {
+      id: '/admin/properties'
+      path: '/admin/properties'
+      fullPath: '/admin/properties'
+      preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R403Route: R403Route,
+  ConfirmEmailRoute: ConfirmEmailRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRoute,
+  RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  AdminPropertiesRoute: AdminPropertiesRoute,
   HopDongMoiRoute: HopDongMoiRoute,
   TaiSanIdRoute: TaiSanIdRoute,
   TaiSanMoiRoute: TaiSanMoiRoute,
@@ -250,13 +418,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
