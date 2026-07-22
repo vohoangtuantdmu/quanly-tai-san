@@ -11,21 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { assetsApi, type CreateAssetInput } from "@/lib/api/assets";
 import {
-  ASSET_TYPE,
-  OWNERSHIP_TYPE,
-  enumOptions,
-  type AssetTypeCode,
-  type OwnershipTypeCode,
+  ASSET_TYPE, OWNERSHIP_TYPE, enumOptions,
+  type AssetTypeCode, type OwnershipTypeCode,
 } from "@/constants/enums";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { getErrorMessage } from "@/lib/api/errors";
+import { ClientMap } from "@/components/map/ClientMap";
 
 export const Route = createFileRoute("/tai-san/moi")({
   head: () => ({ meta: [{ title: "Tạo tài sản mới — Quản Lý Tài Sản" }] }),
   component: NewAsset,
 });
 
-const STEPS = ["Thông tin cơ bản", "Địa chỉ", "Giá trị & thời điểm", "Xác nhận"];
+const STEPS = ["Thông tin cơ bản", "Địa chỉ & vị trí", "Giá trị & thời điểm", "Xác nhận"];
+const DEFAULT_CENTER: [number, number] = [10.7769, 106.7009];
 
 function toIsoUtcOrNull(v: string): string | null {
   if (!v) return null;
@@ -46,6 +45,7 @@ function NewAsset() {
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
   const [detail, setDetail] = useState("");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [area, setArea] = useState<number | null>(null);
   const [currentValue, setCurrentValue] = useState<number | null>(null);
   const [acquisitionDate, setAcquisitionDate] = useState("");
@@ -54,8 +54,7 @@ function NewAsset() {
   const canNext =
     (step === 0 && name.trim().length > 0) ||
     (step === 1 && city.trim() && district.trim() && ward.trim()) ||
-    step === 2 ||
-    step === 3;
+    step === 2 || step === 3;
 
   const mutation = useMutation({
     mutationFn: (body: CreateAssetInput) => assetsApi.create(body),
@@ -68,38 +67,31 @@ function NewAsset() {
   });
 
   const submit = () => {
-    const body: CreateAssetInput = {
+    mutation.mutate({
       name: name.trim(),
-      type,
-      ownershipType,
+      type, ownershipType,
       address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() || null },
-      location: null,
+      location: location ? { latitude: location.lat, longitude: location.lng } : null,
       area: area ?? null,
       currentValue: ownershipType === 2 ? null : currentValue ?? null,
       acquisitionDate: toIsoUtcOrNull(acquisitionDate),
       notes: notes.trim() || null,
-    };
-    mutation.mutate(body);
+    });
   };
 
   return (
     <div className="p-6 max-w-3xl space-y-5">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild><Link to="/tai-san"><ArrowLeft className="h-4 w-4 mr-1" />Quay lại</Link></Button>
-      </div>
+      <Button variant="ghost" size="sm" asChild><Link to="/tai-san"><ArrowLeft className="h-4 w-4 mr-1" />Quay lại</Link></Button>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Thêm tài sản mới</h1>
         <p className="text-sm text-muted-foreground mt-1">Bước {step + 1}/{STEPS.length} · {STEPS[step]}</p>
       </div>
 
-      {/* Stepper */}
       <div className="flex items-center gap-2">
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center flex-1">
             <div className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
-              i < step ? "bg-primary text-primary-foreground"
-              : i === step ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
+              i <= step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             }`}>{i < step ? <Check className="h-4 w-4" /> : i + 1}</div>
             {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 mx-2 ${i < step ? "bg-primary" : "bg-border"}`} />}
           </div>
@@ -111,27 +103,18 @@ function NewAsset() {
         <CardContent className="space-y-4">
           {step === 0 && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="name">Tên tài sản *</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Nhà phố Quận 7" />
-              </div>
+              <div className="space-y-2"><Label htmlFor="name">Tên tài sản *</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Nhà phố Quận 7" /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Loại tài sản</Label>
+                <div className="space-y-2"><Label>Loại tài sản</Label>
                   <Select value={String(type)} onValueChange={(v) => setType(Number(v) as AssetTypeCode)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {enumOptions(ASSET_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{enumOptions(ASSET_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Hình thức sở hữu</Label>
+                <div className="space-y-2"><Label>Hình thức sở hữu</Label>
                   <Select value={String(ownershipType)} onValueChange={(v) => setOwnershipType(Number(v) as OwnershipTypeCode)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {enumOptions(OWNERSHIP_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{enumOptions(OWNERSHIP_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
@@ -142,36 +125,38 @@ function NewAsset() {
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2"><Label>Thành phố *</Label><Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="TP. Hồ Chí Minh" /></div>
-                <div className="space-y-2"><Label>Quận/Huyện *</Label><Input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Quận 7" /></div>
-                <div className="space-y-2"><Label>Phường/Xã *</Label><Input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="Phường Tân Phong" /></div>
+                <div className="space-y-2"><Label>Quận/Huyện *</Label><Input value={district} onChange={(e) => setDistrict(e.target.value)} /></div>
+                <div className="space-y-2"><Label>Phường/Xã *</Label><Input value={ward} onChange={(e) => setWard(e.target.value)} /></div>
                 <div className="space-y-2"><Label>Số nhà, đường</Label><Input value={detail} onChange={(e) => setDetail(e.target.value)} /></div>
               </div>
-              <p className="text-xs text-muted-foreground">Chọn vị trí trên bản đồ sẽ được bổ sung ở bản cập nhật sau.</p>
+              <div className="space-y-2">
+                <Label>Vị trí trên bản đồ (bấm để đặt marker)</Label>
+                <ClientMap
+                  center={location ? [location.lat, location.lng] : DEFAULT_CENTER}
+                  zoom={location ? 15 : 12}
+                  height={300}
+                  onPick={(lat, lng) => setLocation({ lat, lng })}
+                  pickerMarker={location ? { lat: location.lat, lng: location.lng } : null}
+                />
+                {location && <p className="text-xs text-muted-foreground">Đã chọn: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}</p>}
+              </div>
             </>
           )}
 
           {step === 2 && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Diện tích (m²)</Label>
+                <div className="space-y-2"><Label>Diện tích (m²)</Label>
                   <Input inputMode="decimal" value={area ?? ""} onChange={(e) => { const v = e.target.value; setArea(v === "" ? null : Number(v)); }} />
                 </div>
-                <div className="space-y-2">
-                  <Label>{ownershipType === 2 ? "Ngày bắt đầu thuê" : "Ngày mua"}</Label>
+                <div className="space-y-2"><Label>{ownershipType === 2 ? "Ngày bắt đầu thuê" : "Ngày mua"}</Label>
                   <Input type="date" value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} />
                 </div>
               </div>
               {ownershipType !== 2 && (
-                <div className="space-y-2">
-                  <Label>Giá trị hiện tại</Label>
-                  <CurrencyInput value={currentValue} onChange={setCurrentValue} placeholder="0" />
-                </div>
+                <div className="space-y-2"><Label>Giá trị hiện tại</Label><CurrencyInput value={currentValue} onChange={setCurrentValue} placeholder="0" /></div>
               )}
-              <div className="space-y-2">
-                <Label>Ghi chú</Label>
-                <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-              </div>
+              <div className="space-y-2"><Label>Ghi chú</Label><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
             </>
           )}
 
@@ -181,6 +166,7 @@ function NewAsset() {
               <SummaryRow label="Loại" value={ASSET_TYPE[type]} />
               <SummaryRow label="Hình thức" value={OWNERSHIP_TYPE[ownershipType]} />
               <SummaryRow label="Địa chỉ" value={[detail, ward, district, city].filter(Boolean).join(", ")} />
+              <SummaryRow label="Vị trí" value={location ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}` : "—"} />
               <SummaryRow label="Diện tích" value={area ? `${area} m²` : "—"} />
               {ownershipType !== 2 && <SummaryRow label="Giá trị hiện tại" value={currentValue ? new Intl.NumberFormat("vi-VN").format(currentValue) + " ₫" : "—"} />}
               <SummaryRow label={ownershipType === 2 ? "Ngày bắt đầu thuê" : "Ngày mua"} value={acquisitionDate || "—"} />
@@ -197,9 +183,7 @@ function NewAsset() {
         {step < STEPS.length - 1 ? (
           <Button onClick={() => setStep(step + 1)} disabled={!canNext}>Tiếp<ArrowRight className="h-4 w-4 ml-1.5" /></Button>
         ) : (
-          <Button onClick={submit} disabled={mutation.isPending}>
-            {mutation.isPending ? "Đang tạo..." : "Tạo tài sản"}
-          </Button>
+          <Button onClick={submit} disabled={mutation.isPending}>{mutation.isPending ? "Đang tạo..." : "Tạo tài sản"}</Button>
         )}
       </div>
     </div>

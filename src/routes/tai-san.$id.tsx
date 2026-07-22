@@ -7,6 +7,7 @@ import { ASSET_TYPE, OWNERSHIP_TYPE } from "@/constants/enums";
 import { AssetStatusBadgeCode } from "@/components/EnumBadge";
 import { formatVND, formatDate } from "@/lib/format";
 import { getErrorMessage } from "@/lib/api/errors";
+import { ApiError } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Pencil, Trash2, MapPin, Ruler, Calendar, Wallet, ImageIcon, RefreshCw } from "lucide-react";
-import { ApiError } from "@/lib/auth/types";
+import { AssetMediaTab } from "@/components/media/AssetMediaTab";
+import { AssetUnitsTab } from "@/components/units/AssetUnitsTab";
+import { AssetContractsTab } from "@/components/contracts/AssetContractsTab";
+import { ClientMap } from "@/components/map/ClientMap";
 
 export const Route = createFileRoute("/tai-san/$id")({
   head: () => ({ meta: [{ title: "Chi tiết tài sản — Quản Lý Tài Sản" }] }),
@@ -28,11 +32,7 @@ function AssetDetail() {
   const [delOpen, setDelOpen] = useState(false);
   const [delError, setDelError] = useState<string | null>(null);
 
-  const query = useQuery({
-    queryKey: ["asset", id],
-    queryFn: () => assetsApi.detail(id),
-    retry: 1,
-  });
+  const query = useQuery({ queryKey: ["asset", id], queryFn: () => assetsApi.detail(id), retry: 1 });
 
   const removeMut = useMutation({
     mutationFn: () => assetsApi.remove(id),
@@ -42,26 +42,14 @@ function AssetDetail() {
       navigate({ to: "/tai-san" });
     },
     onError: (err) => {
-      // 409: giữ dialog mở, hiển thị lý do
-      if (err instanceof ApiError && err.status === 409) {
-        setDelError(getErrorMessage(err));
-      } else {
-        toast.error(getErrorMessage(err, "Không xoá được tài sản"));
-        setDelOpen(false);
-      }
+      if (err instanceof ApiError && err.status === 409) setDelError(getErrorMessage(err));
+      else { toast.error(getErrorMessage(err, "Không xoá được tài sản")); setDelOpen(false); }
     },
   });
 
   if (query.isLoading) {
-    return (
-      <div className="p-6 space-y-4 max-w-[1200px]">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-56 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    );
+    return <div className="p-6 space-y-4 max-w-[1200px]"><Skeleton className="h-8 w-64" /><Skeleton className="h-56 w-full" /><Skeleton className="h-40 w-full" /></div>;
   }
-
   if (query.isError || !query.data) {
     return (
       <div className="p-6 max-w-[600px]">
@@ -81,23 +69,16 @@ function AssetDetail() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Button variant="ghost" size="sm" asChild><Link to="/tai-san"><ArrowLeft className="h-4 w-4 mr-1" />Về danh sách</Link></Button>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/tai-san/$id/sua" params={{ id }}><Pencil className="h-4 w-4 mr-1.5" />Sửa</Link>
-          </Button>
+          <Button variant="outline" size="sm" asChild><Link to="/tai-san/$id/sua" params={{ id }}><Pencil className="h-4 w-4 mr-1.5" />Sửa</Link></Button>
           <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => { setDelError(null); setDelOpen(true); }}>
             <Trash2 className="h-4 w-4 mr-1.5" />Xoá
           </Button>
         </div>
       </div>
 
-      {/* Header card */}
       <Card>
         <div className="relative h-56 bg-muted overflow-hidden rounded-t-lg">
-          {a.thumbnail?.url ? (
-            <img src={a.thumbnail.url} alt={a.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center"><ImageIcon className="h-12 w-12 text-muted-foreground/40" /></div>
-          )}
+          {a.thumbnail?.url ? <img src={a.thumbnail.url} alt={a.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="h-12 w-12 text-muted-foreground/40" /></div>}
         </div>
         <CardContent className="p-5">
           <div className="flex items-start justify-between flex-wrap gap-3">
@@ -140,18 +121,23 @@ function AssetDetail() {
           </div>
           {a.location && (
             <Card><CardHeader><CardTitle className="text-base">Vị trí</CardTitle></CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                <p>Toạ độ: {a.location.latitude.toFixed(5)}, {a.location.longitude.toFixed(5)}</p>
-                <p className="text-xs mt-1">Bản đồ sẽ được bổ sung trong bản cập nhật sau.</p>
+              <CardContent>
+                <ClientMap
+                  center={[a.location.latitude, a.location.longitude]}
+                  zoom={15}
+                  height={300}
+                  markers={[{ id: a.id, lat: a.location.latitude, lng: a.location.longitude, title: a.name }]}
+                />
+                <p className="text-xs text-muted-foreground mt-2">Toạ độ: {a.location.latitude.toFixed(5)}, {a.location.longitude.toFixed(5)}</p>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        <TabsContent value="units"><Placeholder text="Sắp có — Quản lý tầng/phòng." /></TabsContent>
-        <TabsContent value="contracts"><Placeholder text="Sắp có — Danh sách hợp đồng của tài sản." /></TabsContent>
-        <TabsContent value="media"><Placeholder text="Sắp có — Thư viện ảnh." /></TabsContent>
-        <TabsContent value="docs"><Placeholder text="Sắp có — Giấy tờ pháp lý." /></TabsContent>
+        <TabsContent value="units"><AssetUnitsTab assetId={id} /></TabsContent>
+        <TabsContent value="contracts"><AssetContractsTab assetId={id} /></TabsContent>
+        <TabsContent value="media"><AssetMediaTab assetId={id} /></TabsContent>
+        <TabsContent value="docs"><Card><CardContent className="py-14 text-center text-sm text-muted-foreground">Sắp có — Giấy tờ pháp lý.</CardContent></Card></TabsContent>
       </Tabs>
 
       <AlertDialog open={delOpen} onOpenChange={(v) => { if (!removeMut.isPending) { setDelOpen(v); if (!v) setDelError(null); } }}>
@@ -159,20 +145,12 @@ function AssetDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xoá tài sản?</AlertDialogTitle>
             <AlertDialogDescription>
-              {delError ? (
-                <span className="text-destructive">{delError}</span>
-              ) : (
-                <>Thao tác này không thể hoàn tác. Tài sản <b>{a.name}</b> sẽ bị xoá vĩnh viễn.</>
-              )}
+              {delError ? <span className="text-destructive">{delError}</span> : <>Thao tác này không thể hoàn tác. Tài sản <b>{a.name}</b> sẽ bị xoá vĩnh viễn.</>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={removeMut.isPending}>Huỷ</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); removeMut.mutate(); }}
-              disabled={removeMut.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); removeMut.mutate(); }} disabled={removeMut.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {removeMut.isPending ? "Đang xoá..." : "Xoá"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -190,8 +168,4 @@ function Row({ icon: Icon, label, value }: { icon: React.ElementType; label: str
       <span className="font-medium">{value}</span>
     </div>
   );
-}
-
-function Placeholder({ text }: { text: string }) {
-  return <Card><CardContent className="py-14 text-center text-sm text-muted-foreground">{text}</CardContent></Card>;
 }

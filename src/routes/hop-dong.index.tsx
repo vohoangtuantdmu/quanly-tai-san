@@ -1,141 +1,130 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useStore } from "@/lib/store";
+import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { contractsApi, type ContractFilters } from "@/lib/api/contracts";
+import {
+  CONTRACT_DIRECTION, CONTRACT_STATUS, CONTRACT_STATUS_CLASS,
+  PAYMENT_CYCLE,
+  type ContractDirectionCode, type ContractStatusCode,
+} from "@/constants/enums";
 import { formatDate, formatVND, daysUntil } from "@/lib/format";
+import { getErrorMessage } from "@/lib/api/errors";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ContractStatusBadge } from "@/components/StatusBadge";
-import { Plus, Search, AlertTriangle } from "lucide-react";
-import type { ContractDirection, ContractStatus } from "@/lib/types";
-import { RenewContractDialog, TerminateContractDialog } from "@/components/contracts/ContractDialogs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, AlertTriangle, FileText, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/hop-dong/")({
   head: () => ({ meta: [{ title: "Quản lý hợp đồng — Quản Lý Tài Sản" }] }),
   component: ContractList,
 });
 
+type Tab = "all" | "out" | "in" | "expiring";
+
 function ContractList() {
   const navigate = useNavigate();
-  const store = useStore();
-  const [q, setQ] = useState("");
-  const [fDir, setFDir] = useState<ContractDirection | "all">("all");
-  const [fStatus, setFStatus] = useState<ContractStatus | "all" | "expiring">("all");
-  const [renewOpen, setRenewOpen] = useState<string | null>(null);
-  const [termOpen, setTermOpen] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("all");
+  const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    return store.contracts.filter((c) => {
-      if (fDir !== "all" && c.direction !== fDir) return false;
-      if (fStatus === "expiring") {
-        if (c.status !== "Đang hiệu lực") return false;
-        const d = daysUntil(c.endDate);
-        if (!(d >= 0 && d <= 60)) return false;
-      } else if (fStatus !== "all" && c.status !== fStatus) return false;
-      if (q) {
-        const asset = store.assets.find((a) => a.id === c.assetId);
-        const cp = store.contacts.find((x) => x.id === c.counterpartyId);
-        const text = `${c.code} ${asset?.name ?? ""} ${cp?.name ?? ""}`.toLowerCase();
-        if (!text.includes(q.toLowerCase())) return false;
-      }
-      return true;
-    });
-  }, [store.contracts, store.assets, store.contacts, q, fDir, fStatus]);
+  const filters: ContractFilters = {
+    direction: tab === "out" ? 1 : tab === "in" ? 2 : "",
+    status: tab === "expiring" ? 2 : "",
+    page,
+    pageSize: 20,
+  };
+
+  const q = useQuery({
+    queryKey: ["contracts", filters],
+    queryFn: () => contractsApi.list(filters),
+    placeholderData: keepPreviousData,
+  });
+
+  const items = q.data?.items ?? [];
+  const filtered = tab === "expiring"
+    ? items.filter((c) => { const d = daysUntil(c.endDate); return d >= 0 && d <= 30; })
+    : items;
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px]">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Quản lý hợp đồng</h1>
-          <p className="text-sm text-muted-foreground mt-1">Tất cả hợp đồng thuê hai chiều: cho thuê tài sản của bạn và thuê từ chủ nhà khác.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {q.data ? `${q.data.totalCount} hợp đồng` : "Đang tải..."}
+          </p>
         </div>
-        <Button onClick={() => navigate({ to: "/hop-dong/moi" })}><Plus className="h-4 w-4 mr-1.5" />Tạo hợp đồng mới</Button>
+        <Button onClick={() => navigate({ to: "/hop-dong/moi" })}><Plus className="h-4 w-4 mr-1.5" />Tạo hợp đồng</Button>
       </div>
 
-      <Card>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Tìm mã HĐ, tài sản, đối tác..." className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
-          <Select value={fDir} onValueChange={(v) => setFDir(v as ContractDirection | "all")}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả chiều</SelectItem>
-              <SelectItem value="Cho thuê">Cho thuê</SelectItem>
-              <SelectItem value="Đi thuê">Đi thuê</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={fStatus} onValueChange={(v) => setFStatus(v as ContractStatus | "all" | "expiring")}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="expiring">Sắp hết hạn (60 ngày)</SelectItem>
-              {["Đang hiệu lực", "Nháp", "Hết hạn", "Đã chấm dứt", "Đã gia hạn"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as Tab); setPage(1); }}>
+        <TabsList>
+          <TabsTrigger value="all">Tất cả</TabsTrigger>
+          <TabsTrigger value="out">Cho thuê</TabsTrigger>
+          <TabsTrigger value="in">Đi thuê</TabsTrigger>
+          <TabsTrigger value="expiring">Sắp hết hạn</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      <Card>
-        <CardContent className="p-0">
+      {q.isLoading && <Skeleton className="h-80 w-full" />}
+      {q.isError && (
+        <Card><CardContent className="p-10 text-center space-y-3">
+          <p className="text-destructive text-sm">{getErrorMessage(q.error, "Không tải được danh sách")}</p>
+          <Button variant="outline" size="sm" onClick={() => q.refetch()}><RefreshCw className="h-4 w-4 mr-1.5" />Thử lại</Button>
+        </CardContent></Card>
+      )}
+
+      {q.data && filtered.length === 0 && (
+        <Card><CardContent className="py-16 text-center">
+          <FileText className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-sm text-muted-foreground">Chưa có hợp đồng nào.</p>
+          <Button className="mt-4" size="sm" onClick={() => navigate({ to: "/hop-dong/moi" })}>
+            <Plus className="h-4 w-4 mr-1.5" />Tạo hợp đồng
+          </Button>
+        </CardContent></Card>
+      )}
+
+      {q.data && filtered.length > 0 && (
+        <Card><CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mã HĐ</TableHead>
                 <TableHead>Tài sản</TableHead>
                 <TableHead>Chiều</TableHead>
                 <TableHead>Đối tác</TableHead>
                 <TableHead>Kỳ hạn</TableHead>
-                <TableHead className="text-right">Giá thuê</TableHead>
+                <TableHead className="text-right">Tiền thuê</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground text-sm">Không có hợp đồng nào phù hợp.</TableCell></TableRow>
-              )}
               {filtered.map((c) => {
-                const asset = store.assets.find((a) => a.id === c.assetId);
-                const unit = c.unitId ? store.units.find((u) => u.id === c.unitId) : null;
-                const cp = store.contacts.find((x) => x.id === c.counterpartyId);
-                const remaining = daysUntil(c.endDate);
+                const dLeft = daysUntil(c.endDate);
                 return (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">
-                      {c.code}
-                      {c.parentContractId && <Badge variant="outline" className="ml-2 text-xs">Nối tiếp</Badge>}
-                    </TableCell>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate({ to: "/hop-dong/$id", params: { id: c.id } })}>
                     <TableCell>
-                      <Link to="/tai-san/$id" params={{ id: c.assetId }} className="hover:underline">{asset?.name}</Link>
-                      {unit && <div className="text-xs text-muted-foreground">{unit.name}</div>}
+                      <Link to="/tai-san/$id" params={{ id: c.assetId }} className="hover:underline" onClick={(e) => e.stopPropagation()}>{c.assetName}</Link>
+                      {c.assetUnitName && <div className="text-xs text-muted-foreground">{c.assetUnitName}</div>}
                     </TableCell>
-                    <TableCell><Badge variant={c.direction === "Cho thuê" ? "default" : "secondary"}>{c.direction}</Badge></TableCell>
-                    <TableCell className="text-sm">{cp?.name ?? "—"}</TableCell>
+                    <TableCell><Badge variant="outline">{CONTRACT_DIRECTION[c.direction]}</Badge></TableCell>
+                    <TableCell className="text-sm">
+                      {c.counterpartyName}
+                      {c.counterpartyPhone && <div className="text-xs text-muted-foreground">{c.counterpartyPhone}</div>}
+                    </TableCell>
                     <TableCell className="text-sm">
                       <div>{formatDate(c.startDate)}</div>
                       <div className="text-xs text-muted-foreground">→ {formatDate(c.endDate)}</div>
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatVND(c.rentAmount)}
-                      <div className="text-xs text-muted-foreground font-normal">{c.paymentCycle}</div>
+                      <div className="text-xs text-muted-foreground font-normal">{PAYMENT_CYCLE[c.paymentCycle]}</div>
                     </TableCell>
                     <TableCell>
-                      <ContractStatusBadge status={c.status} />
-                      {c.status === "Đang hiệu lực" && remaining >= 0 && remaining <= 30 && (
-                        <div className="text-xs text-warning-foreground mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />Còn {remaining} ngày</div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {c.status === "Đang hiệu lực" && (
-                        <div className="flex gap-1 justify-end">
-                          <Button size="sm" variant="outline" onClick={() => setRenewOpen(c.id)}>Gia hạn</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setTermOpen(c.id)}>Chấm dứt</Button>
-                        </div>
+                      <Badge variant="outline" className={CONTRACT_STATUS_CLASS[c.status]}>{CONTRACT_STATUS[c.status]}</Badge>
+                      {c.status === 2 && dLeft >= 0 && dLeft <= 30 && (
+                        <div className="text-xs text-warning-foreground mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />Còn {dLeft} ngày</div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -143,11 +132,18 @@ function ContractList() {
               })}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </CardContent></Card>
+      )}
 
-      {renewOpen && <RenewContractDialog contractId={renewOpen} open={!!renewOpen} onOpenChange={(v: boolean) => !v && setRenewOpen(null)} />}
-      {termOpen && <TerminateContractDialog contractId={termOpen} open={!!termOpen} onOpenChange={(v: boolean) => !v && setTermOpen(null)} />}
+      {q.data && q.data.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 pt-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Trước</Button>
+          <span className="text-sm px-3">Trang {page}/{q.data.totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= q.data.totalPages} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+        </div>
+      )}
     </div>
   );
 }
+// Unused re-exports to keep compiler happy on unreferenced imports
+export type _Unused = ContractDirectionCode | ContractStatusCode;
