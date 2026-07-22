@@ -5,7 +5,6 @@ import { contractsApi, type ContractFilters } from "@/lib/api/contracts";
 import {
   CONTRACT_DIRECTION, CONTRACT_STATUS, CONTRACT_STATUS_CLASS,
   PAYMENT_CYCLE,
-  type ContractDirectionCode, type ContractStatusCode,
 } from "@/constants/enums";
 import { formatDate, formatVND, daysUntil } from "@/lib/format";
 import { getErrorMessage } from "@/lib/api/errors";
@@ -145,5 +144,3 @@ function ContractList() {
     </div>
   );
 }
-// Unused re-exports to keep compiler happy on unreferenced imports
-export type _Unused = ContractDirectionCode | ContractStatusCode;
