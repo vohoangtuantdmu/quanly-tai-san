@@ -1,4 +1,5 @@
 import { api, toQuery } from "./http";
+import { apiForm } from "./http";
 import type {
   AssetStatusCode,
   AssetTypeCode,
@@ -113,6 +114,23 @@ export interface AssetUnit {
   notes: string | null;
 }
 
+export interface UnitInput {
+  name: string;
+  floorNumber?: number | null;
+  area?: number | null;
+  status?: UnitStatusCode;
+  notes?: string | null;
+}
+
+// ---- Media ----
+export interface AssetMediaItem {
+  id: string;
+  file: AssetMediaFile;
+  caption: string | null;
+  takenAt: string | null;
+  sortOrder: number;
+}
+
 // ---- API functions ----
 export const assetsApi = {
   list: (f: AssetListFilters = {}) =>
@@ -129,5 +147,29 @@ export const assetsApi = {
 
   units: {
     list: (assetId: string) => api<AssetUnit[]>(`/assets/${assetId}/units`),
+    create: (assetId: string, body: UnitInput) =>
+      api<AssetUnit>(`/assets/${assetId}/units`, { method: "POST", body }),
+    update: (assetId: string, unitId: string, body: UnitInput) =>
+      api<AssetUnit>(`/assets/${assetId}/units/${unitId}`, { method: "PUT", body }),
+    remove: (assetId: string, unitId: string) =>
+      api<void>(`/assets/${assetId}/units/${unitId}`, { method: "DELETE" }),
+  },
+
+  media: {
+    list: (assetId: string) => api<AssetMediaItem[]>(`/assets/${assetId}/media`),
+    upload: (assetId: string, files: File[], caption?: string, takenAt?: string) => {
+      const fd = new FormData();
+      for (const f of files) fd.append("Files", f);
+      if (caption) fd.append("Caption", caption);
+      if (takenAt) fd.append("TakenAt", takenAt);
+      return apiForm<AssetMediaItem[]>(`/assets/${assetId}/media`, fd, "POST");
+    },
+    remove: (assetId: string, mediaId: string) =>
+      api<void>(`/assets/${assetId}/media/${mediaId}`, { method: "DELETE" }),
+    setThumbnail: (assetId: string, file: File) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      return apiForm<AssetDetail>(`/assets/${assetId}/thumbnail`, fd, "PUT");
+    },
   },
 };

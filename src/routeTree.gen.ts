@@ -26,6 +26,7 @@ import { Route as DoiTacIndexRouteImport } from './routes/doi-tac.index'
 import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
 import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
 import { Route as HopDongMoiRouteImport } from './routes/hop-dong.moi'
+import { Route as HopDongIdRouteImport } from './routes/hop-dong.$id'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as TaiSanIdSuaRouteImport } from './routes/tai-san.$id.sua'
 
@@ -114,6 +115,11 @@ const HopDongMoiRoute = HopDongMoiRouteImport.update({
   path: '/hop-dong/moi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HopDongIdRoute = HopDongIdRouteImport.update({
+  id: '/hop-dong/$id',
+  path: '/hop-dong/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   id: '/admin/properties',
   path: '/admin/properties',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/properties': typeof AdminPropertiesRoute
+  '/hop-dong/$id': typeof HopDongIdRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRouteWithChildren
   '/tai-san/moi': typeof TaiSanMoiRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/properties': typeof AdminPropertiesRoute
+  '/hop-dong/$id': typeof HopDongIdRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRouteWithChildren
   '/tai-san/moi': typeof TaiSanMoiRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/properties': typeof AdminPropertiesRoute
+  '/hop-dong/$id': typeof HopDongIdRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRouteWithChildren
   '/tai-san/moi': typeof TaiSanMoiRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/admin/properties'
+    | '/hop-dong/$id'
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/admin/properties'
+    | '/hop-dong/$id'
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/admin/properties'
+    | '/hop-dong/$id'
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
@@ -265,6 +277,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
+  HopDongIdRoute: typeof HopDongIdRoute
   HopDongMoiRoute: typeof HopDongMoiRoute
   TaiSanIdRoute: typeof TaiSanIdRouteWithChildren
   TaiSanMoiRoute: typeof TaiSanMoiRoute
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HopDongMoiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hop-dong/$id': {
+      id: '/hop-dong/$id'
+      path: '/hop-dong/$id'
+      fullPath: '/hop-dong/$id'
+      preLoaderRoute: typeof HopDongIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/properties': {
       id: '/admin/properties'
       path: '/admin/properties'
@@ -436,6 +456,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
+  HopDongIdRoute: HopDongIdRoute,
   HopDongMoiRoute: HopDongMoiRoute,
   TaiSanIdRoute: TaiSanIdRouteWithChildren,
   TaiSanMoiRoute: TaiSanMoiRoute,
@@ -449,13 +470,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
