@@ -1,157 +1,216 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useStore } from "@/lib/store";
-import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import type { Asset, AssetType, OwnershipType } from "@/lib/types";
+import { assetsApi, type CreateAssetInput } from "@/lib/api/assets";
+import {
+  ASSET_TYPE,
+  OWNERSHIP_TYPE,
+  enumOptions,
+  type AssetTypeCode,
+  type OwnershipTypeCode,
+} from "@/constants/enums";
+import { CurrencyInput } from "@/components/CurrencyInput";
+import { getErrorMessage } from "@/lib/api/errors";
 
 export const Route = createFileRoute("/tai-san/moi")({
   head: () => ({ meta: [{ title: "Tạo tài sản mới — Quản Lý Tài Sản" }] }),
   component: NewAsset,
 });
 
-const STEPS = ["Thông tin cơ bản", "Địa chỉ & vị trí", "Giá trị & thời điểm", "Ảnh đại diện"];
+const STEPS = ["Thông tin cơ bản", "Địa chỉ", "Giá trị & thời điểm", "Xác nhận"];
+
+function toIsoUtcOrNull(v: string): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return null;
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString();
+}
 
 function NewAsset() {
   const navigate = useNavigate();
-  const store = useStore();
+  const qc = useQueryClient();
   const [step, setStep] = useState(0);
 
   const [name, setName] = useState("");
-  const [type, setType] = useState<AssetType>("Nhà riêng");
-  const [ownershipType, setOwnershipType] = useState<OwnershipType>("Sở hữu");
+  const [type, setType] = useState<AssetTypeCode>(1);
+  const [ownershipType, setOwnershipType] = useState<OwnershipTypeCode>(1);
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
-  const [addressDetail, setAddressDetail] = useState("");
-  const [area, setArea] = useState(0);
-  const [currentValue, setCurrentValue] = useState(0);
-  const [acquisitionDate, setAcquisitionDate] = useState(new Date().toISOString().slice(0, 10));
-  const [thumbnail, setThumbnail] = useState("https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800");
+  const [detail, setDetail] = useState("");
+  const [area, setArea] = useState<number | null>(null);
+  const [currentValue, setCurrentValue] = useState<number | null>(null);
+  const [acquisitionDate, setAcquisitionDate] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const canNext = () => {
-    if (step === 0) return !!name.trim();
-    if (step === 1) return !!city && !!district;
-    return true;
-  };
+  const canNext =
+    (step === 0 && name.trim().length > 0) ||
+    (step === 1 && city.trim() && district.trim() && ward.trim()) ||
+    step === 2 ||
+    step === 3;
 
-  const handleFinish = () => {
-    const asset: Asset = {
-      id: `a-${Date.now()}`, name, type, ownershipType,
-      status: ownershipType === "Sở hữu" ? "Đang sử dụng" : "Trống",
-      city, district, ward, addressDetail,
-      lat: 10.77 + Math.random() * 0.1, lng: 106.7 + Math.random() * 0.1,
-      area, currentValue, acquisitionDate: new Date(acquisitionDate).toISOString(),
-      thumbnail,
+  const mutation = useMutation({
+    mutationFn: (body: CreateAssetInput) => assetsApi.create(body),
+    onSuccess: (created) => {
+      toast.success("Đã tạo tài sản");
+      qc.invalidateQueries({ queryKey: ["assets"] });
+      navigate({ to: "/tai-san/$id", params: { id: created.id } });
+    },
+    onError: (err) => toast.error(getErrorMessage(err, "Không tạo được tài sản")),
+  });
+
+  const submit = () => {
+    const body: CreateAssetInput = {
+      name: name.trim(),
+      type,
+      ownershipType,
+      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() || null },
+      location: null,
+      area: area ?? null,
+      currentValue: ownershipType === 2 ? null : currentValue ?? null,
+      acquisitionDate: toIsoUtcOrNull(acquisitionDate),
+      notes: notes.trim() || null,
     };
-    store.addAsset(asset);
-    toast.success("Đã tạo tài sản mới", { description: asset.name });
-    navigate({ to: "/tai-san/$id", params: { id: asset.id } });
+    mutation.mutate(body);
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-5">
+    <div className="p-6 max-w-3xl space-y-5">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" asChild><Link to="/tai-san"><ArrowLeft className="h-4 w-4 mr-1" />Quay lại</Link></Button>
+      </div>
       <div>
-        <Button variant="ghost" size="sm" asChild className="mb-3"><Link to="/tai-san"><ArrowLeft className="h-4 w-4 mr-1.5" />Quay lại</Link></Button>
-        <h1 className="text-2xl font-semibold tracking-tight">Tạo tài sản mới</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Thêm tài sản mới</h1>
+        <p className="text-sm text-muted-foreground mt-1">Bước {step + 1}/{STEPS.length} · {STEPS[step]}</p>
       </div>
 
       {/* Stepper */}
       <div className="flex items-center gap-2">
         {STEPS.map((s, i) => (
-          <div key={s} className="flex items-center gap-2 flex-1">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium shrink-0 ${i < step ? "bg-success text-success-foreground" : i === step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-              {i < step ? <Check className="h-4 w-4" /> : i + 1}
-            </div>
-            <div className={`text-xs font-medium hidden md:block ${i === step ? "text-foreground" : "text-muted-foreground"}`}>{s}</div>
-            {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 ${i < step ? "bg-success" : "bg-muted"}`} />}
+          <div key={s} className="flex items-center flex-1">
+            <div className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
+              i < step ? "bg-primary text-primary-foreground"
+              : i === step ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground"
+            }`}>{i < step ? <Check className="h-4 w-4" /> : i + 1}</div>
+            {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 mx-2 ${i < step ? "bg-primary" : "bg-border"}`} />}
           </div>
         ))}
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">{STEPS[step]}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-lg">{STEPS[step]}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {step === 0 && (
             <>
-              <div className="space-y-2"><Label>Tên tài sản *</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Nhà phố Quận 7" /></div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Tên tài sản *</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Nhà phố Quận 7" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Loại tài sản</Label>
-                  <Select value={type} onValueChange={(v) => setType(v as AssetType)}>
+                  <Select value={String(type)} onValueChange={(v) => setType(Number(v) as AssetTypeCode)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {["Nhà riêng", "Căn hộ", "Đất", "Biệt thự", "Nhà mặt phố", "Văn phòng", "Khác"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      {enumOptions(ASSET_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Hình thức</Label>
-                  <RadioGroup value={ownershipType} onValueChange={(v) => setOwnershipType(v as OwnershipType)} className="flex gap-4 pt-2">
-                    <div className="flex items-center gap-2"><RadioGroupItem value="Sở hữu" id="own" /><Label htmlFor="own" className="font-normal">Sở hữu</Label></div>
-                    <div className="flex items-center gap-2"><RadioGroupItem value="Đi thuê" id="lease" /><Label htmlFor="lease" className="font-normal">Đi thuê</Label></div>
-                  </RadioGroup>
+                  <Label>Hình thức sở hữu</Label>
+                  <Select value={String(ownershipType)} onValueChange={(v) => setOwnershipType(Number(v) as OwnershipTypeCode)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {enumOptions(OWNERSHIP_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </>
           )}
+
           {step === 1 && (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2"><Label>Thành phố *</Label><Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="TP. Hồ Chí Minh" /></div>
                 <div className="space-y-2"><Label>Quận/Huyện *</Label><Input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Quận 7" /></div>
-                <div className="space-y-2"><Label>Phường/Xã</Label><Input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="Phường Tân Phong" /></div>
-                <div className="space-y-2"><Label>Diện tích (m²)</Label><Input type="number" value={area || ""} onChange={(e) => setArea(Number(e.target.value))} /></div>
+                <div className="space-y-2"><Label>Phường/Xã *</Label><Input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="Phường Tân Phong" /></div>
+                <div className="space-y-2"><Label>Số nhà, đường</Label><Input value={detail} onChange={(e) => setDetail(e.target.value)} /></div>
               </div>
-              <div className="space-y-2"><Label>Địa chỉ chi tiết</Label><Input value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)} placeholder="123 Nguyễn Thị Thập" /></div>
+              <p className="text-xs text-muted-foreground">Chọn vị trí trên bản đồ sẽ được bổ sung ở bản cập nhật sau.</p>
             </>
           )}
+
           {step === 2 && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Giá trị hiện tại (VNĐ)</Label>
-                <Input type="number" value={currentValue || ""} onChange={(e) => setCurrentValue(Number(e.target.value))} disabled={ownershipType === "Đi thuê"} />
-                {ownershipType === "Đi thuê" && <p className="text-xs text-muted-foreground">Bỏ qua với tài sản đi thuê.</p>}
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Diện tích (m²)</Label>
+                  <Input inputMode="decimal" value={area ?? ""} onChange={(e) => { const v = e.target.value; setArea(v === "" ? null : Number(v)); }} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{ownershipType === 2 ? "Ngày bắt đầu thuê" : "Ngày mua"}</Label>
+                  <Input type="date" value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} />
+                </div>
               </div>
+              {ownershipType !== 2 && (
+                <div className="space-y-2">
+                  <Label>Giá trị hiện tại</Label>
+                  <CurrencyInput value={currentValue} onChange={setCurrentValue} placeholder="0" />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>{ownershipType === "Sở hữu" ? "Ngày mua" : "Ngày bắt đầu thuê"}</Label>
-                <Input type="date" value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} />
+                <Label>Ghi chú</Label>
+                <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
-            </div>
+            </>
           )}
+
           {step === 3 && (
-            <div className="space-y-3">
-              <Label>Ảnh đại diện</Label>
-              <div className="rounded-md border-2 border-dashed border-border p-4">
-                <img src={thumbnail} alt="preview" className="rounded-md w-full h-56 object-cover" />
-                <Input className="mt-3" placeholder="URL ảnh" value={thumbnail} onChange={(e) => setThumbnail(e.target.value)} />
-                <p className="text-xs text-muted-foreground mt-2">Prototype dùng URL. Trong bản đầy đủ có thể upload trực tiếp.</p>
-              </div>
+            <div className="space-y-2 text-sm">
+              <SummaryRow label="Tên" value={name} />
+              <SummaryRow label="Loại" value={ASSET_TYPE[type]} />
+              <SummaryRow label="Hình thức" value={OWNERSHIP_TYPE[ownershipType]} />
+              <SummaryRow label="Địa chỉ" value={[detail, ward, district, city].filter(Boolean).join(", ")} />
+              <SummaryRow label="Diện tích" value={area ? `${area} m²` : "—"} />
+              {ownershipType !== 2 && <SummaryRow label="Giá trị hiện tại" value={currentValue ? new Intl.NumberFormat("vi-VN").format(currentValue) + " ₫" : "—"} />}
+              <SummaryRow label={ownershipType === 2 ? "Ngày bắt đầu thuê" : "Ngày mua"} value={acquisitionDate || "—"} />
+              {notes && <SummaryRow label="Ghi chú" value={notes} />}
             </div>
           )}
         </CardContent>
       </Card>
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
-          <ArrowLeft className="h-4 w-4 mr-1.5" />Bước trước
+        <Button variant="outline" onClick={() => (step === 0 ? navigate({ to: "/tai-san" }) : setStep(step - 1))} disabled={mutation.isPending}>
+          <ArrowLeft className="h-4 w-4 mr-1.5" />{step === 0 ? "Huỷ" : "Quay lại"}
         </Button>
         {step < STEPS.length - 1 ? (
-          <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext()}>
-            Bước tiếp <ArrowRight className="h-4 w-4 ml-1.5" />
-          </Button>
+          <Button onClick={() => setStep(step + 1)} disabled={!canNext}>Tiếp<ArrowRight className="h-4 w-4 ml-1.5" /></Button>
         ) : (
-          <Button onClick={handleFinish} disabled={!name.trim()}>
-            <Check className="h-4 w-4 mr-1.5" />Hoàn tất tạo tài sản
+          <Button onClick={submit} disabled={mutation.isPending}>
+            {mutation.isPending ? "Đang tạo..." : "Tạo tài sản"}
           </Button>
         )}
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4 py-1.5 border-b last:border-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-right">{value}</span>
     </div>
   );
 }

@@ -27,6 +27,7 @@ import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
 import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
 import { Route as HopDongMoiRouteImport } from './routes/hop-dong.moi'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
+import { Route as TaiSanIdSuaRouteImport } from './routes/tai-san.$id.sua'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -118,6 +119,11 @@ const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   path: '/admin/properties',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TaiSanIdSuaRoute = TaiSanIdSuaRouteImport.update({
+  id: '/sua',
+  path: '/sua',
+  getParentRoute: () => TaiSanIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -130,7 +136,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
-  '/tai-san/$id': typeof TaiSanIdRoute
+  '/tai-san/$id': typeof TaiSanIdRouteWithChildren
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/rao-ban/': typeof RaoBanIndexRoute
   '/tai-san/': typeof TaiSanIndexRoute
   '/thu-chi/': typeof ThuChiIndexRoute
+  '/tai-san/$id/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,7 +157,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
-  '/tai-san/$id': typeof TaiSanIdRoute
+  '/tai-san/$id': typeof TaiSanIdRouteWithChildren
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/doi-tac': typeof DoiTacIndexRoute
   '/hop-dong': typeof HopDongIndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/rao-ban': typeof RaoBanIndexRoute
   '/tai-san': typeof TaiSanIndexRoute
   '/thu-chi': typeof ThuChiIndexRoute
+  '/tai-san/$id/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -171,7 +179,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
-  '/tai-san/$id': typeof TaiSanIdRoute
+  '/tai-san/$id': typeof TaiSanIdRouteWithChildren
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/rao-ban/': typeof RaoBanIndexRoute
   '/tai-san/': typeof TaiSanIndexRoute
   '/thu-chi/': typeof ThuChiIndexRoute
+  '/tai-san/$id/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/rao-ban/'
     | '/tai-san/'
     | '/thu-chi/'
+    | '/tai-san/$id/sua'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/rao-ban'
     | '/tai-san'
     | '/thu-chi'
+    | '/tai-san/$id/sua'
   id:
     | '__root__'
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/rao-ban/'
     | '/tai-san/'
     | '/thu-chi/'
+    | '/tai-san/$id/sua'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -254,7 +266,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   HopDongMoiRoute: typeof HopDongMoiRoute
-  TaiSanIdRoute: typeof TaiSanIdRoute
+  TaiSanIdRoute: typeof TaiSanIdRouteWithChildren
   TaiSanMoiRoute: typeof TaiSanMoiRoute
   DoiTacIndexRoute: typeof DoiTacIndexRoute
   HopDongIndexRoute: typeof HopDongIndexRoute
@@ -392,8 +404,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tai-san/$id/sua': {
+      id: '/tai-san/$id/sua'
+      path: '/sua'
+      fullPath: '/tai-san/$id/sua'
+      preLoaderRoute: typeof TaiSanIdSuaRouteImport
+      parentRoute: typeof TaiSanIdRoute
+    }
   }
 }
+
+interface TaiSanIdRouteChildren {
+  TaiSanIdSuaRoute: typeof TaiSanIdSuaRoute
+}
+
+const TaiSanIdRouteChildren: TaiSanIdRouteChildren = {
+  TaiSanIdSuaRoute: TaiSanIdSuaRoute,
+}
+
+const TaiSanIdRouteWithChildren = TaiSanIdRoute._addFileChildren(
+  TaiSanIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -406,7 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   HopDongMoiRoute: HopDongMoiRoute,
-  TaiSanIdRoute: TaiSanIdRoute,
+  TaiSanIdRoute: TaiSanIdRouteWithChildren,
   TaiSanMoiRoute: TaiSanMoiRoute,
   DoiTacIndexRoute: DoiTacIndexRoute,
   HopDongIndexRoute: HopDongIndexRoute,
@@ -418,13 +449,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
