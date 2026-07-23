@@ -91,7 +91,7 @@ function EditAsset() {
       type,
       ownershipType,
       status,
-      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() || null },
+      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() },
       location: query.data.location,
       area,
       currentValue: ownershipType === 2 ? null : currentValue,
