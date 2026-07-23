@@ -9,55 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as ConfirmEmailRouteImport } from './routes/confirm-email'
-import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ThuChiIndexRouteImport } from './routes/thu-chi.index'
-import { Route as TaiSanIndexRouteImport } from './routes/tai-san.index'
-import { Route as RaoBanIndexRouteImport } from './routes/rao-ban.index'
-import { Route as NhacLichIndexRouteImport } from './routes/nhac-lich.index'
-import { Route as HopDongIndexRouteImport } from './routes/hop-dong.index'
-import { Route as DoiTacIndexRouteImport } from './routes/doi-tac.index'
-import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
-import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
-import { Route as HopDongMoiRouteImport } from './routes/hop-dong.moi'
-import { Route as HopDongIdRouteImport } from './routes/hop-dong.$id'
+import { Route as R403RouteImport } from './routes/403'
+import { Route as ConfirmEmailRouteImport } from './routes/confirm-email'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
-import { Route as TaiSanIdSuaRouteImport } from './routes/tai-san.$id.sua'
+import { Route as DoiTacIndexRouteImport } from './routes/doi-tac.index'
+import { Route as HopDongIndexRouteImport } from './routes/hop-dong.index'
+import { Route as HopDongIdRouteImport } from './routes/hop-dong.$id'
+import { Route as HopDongMoiRouteImport } from './routes/hop-dong.moi'
+import { Route as NhacLichIndexRouteImport } from './routes/nhac-lich.index'
+import { Route as RaoBanIndexRouteImport } from './routes/rao-ban.index'
+import { Route as TaiSanIndexRouteImport } from './routes/tai-san.index'
+import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
+import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
+import { Route as ThuChiIndexRouteImport } from './routes/thu-chi.index'
+import { Route as TaiSanIdSuaRouteImport } from './routes/tai-san.$id_.sua'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfirmEmailRoute = ConfirmEmailRouteImport.update({
-  id: '/confirm-email',
-  path: '/confirm-email',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const R403Route = R403RouteImport.update({
@@ -65,59 +40,34 @@ const R403Route = R403RouteImport.update({
   path: '/403',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ConfirmEmailRoute = ConfirmEmailRouteImport.update({
+  id: '/confirm-email',
+  path: '/confirm-email',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ThuChiIndexRoute = ThuChiIndexRouteImport.update({
-  id: '/thu-chi/',
-  path: '/thu-chi/',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TaiSanIndexRoute = TaiSanIndexRouteImport.update({
-  id: '/tai-san/',
-  path: '/tai-san/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RaoBanIndexRoute = RaoBanIndexRouteImport.update({
-  id: '/rao-ban/',
-  path: '/rao-ban/',
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NhacLichIndexRoute = NhacLichIndexRouteImport.update({
-  id: '/nhac-lich/',
-  path: '/nhac-lich/',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HopDongIndexRoute = HopDongIndexRouteImport.update({
-  id: '/hop-dong/',
-  path: '/hop-dong/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DoiTacIndexRoute = DoiTacIndexRouteImport.update({
-  id: '/doi-tac/',
-  path: '/doi-tac/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TaiSanMoiRoute = TaiSanMoiRouteImport.update({
-  id: '/tai-san/moi',
-  path: '/tai-san/moi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TaiSanIdRoute = TaiSanIdRouteImport.update({
-  id: '/tai-san/$id',
-  path: '/tai-san/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HopDongMoiRoute = HopDongMoiRouteImport.update({
-  id: '/hop-dong/moi',
-  path: '/hop-dong/moi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HopDongIdRoute = HopDongIdRouteImport.update({
-  id: '/hop-dong/$id',
-  path: '/hop-dong/$id',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
@@ -125,10 +75,60 @@ const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   path: '/admin/properties',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DoiTacIndexRoute = DoiTacIndexRouteImport.update({
+  id: '/doi-tac/',
+  path: '/doi-tac/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HopDongIndexRoute = HopDongIndexRouteImport.update({
+  id: '/hop-dong/',
+  path: '/hop-dong/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HopDongIdRoute = HopDongIdRouteImport.update({
+  id: '/hop-dong/$id',
+  path: '/hop-dong/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HopDongMoiRoute = HopDongMoiRouteImport.update({
+  id: '/hop-dong/moi',
+  path: '/hop-dong/moi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NhacLichIndexRoute = NhacLichIndexRouteImport.update({
+  id: '/nhac-lich/',
+  path: '/nhac-lich/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RaoBanIndexRoute = RaoBanIndexRouteImport.update({
+  id: '/rao-ban/',
+  path: '/rao-ban/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaiSanIndexRoute = TaiSanIndexRouteImport.update({
+  id: '/tai-san/',
+  path: '/tai-san/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaiSanIdRoute = TaiSanIdRouteImport.update({
+  id: '/tai-san/$id',
+  path: '/tai-san/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaiSanMoiRoute = TaiSanMoiRouteImport.update({
+  id: '/tai-san/moi',
+  path: '/tai-san/moi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThuChiIndexRoute = ThuChiIndexRouteImport.update({
+  id: '/thu-chi/',
+  path: '/thu-chi/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TaiSanIdSuaRoute = TaiSanIdSuaRouteImport.update({
-  id: '/sua',
-  path: '/sua',
-  getParentRoute: () => TaiSanIdRoute,
+  id: '/tai-san/$id_/sua',
+  path: '/tai-san/$id/sua',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -143,7 +143,7 @@ export interface FileRoutesByFullPath {
   '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/$id': typeof HopDongIdRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
-  '/tai-san/$id': typeof TaiSanIdRouteWithChildren
+  '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
@@ -165,7 +165,7 @@ export interface FileRoutesByTo {
   '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/$id': typeof HopDongIdRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
-  '/tai-san/$id': typeof TaiSanIdRouteWithChildren
+  '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/doi-tac': typeof DoiTacIndexRoute
   '/hop-dong': typeof HopDongIndexRoute
@@ -188,7 +188,7 @@ export interface FileRoutesById {
   '/admin/properties': typeof AdminPropertiesRoute
   '/hop-dong/$id': typeof HopDongIdRoute
   '/hop-dong/moi': typeof HopDongMoiRoute
-  '/tai-san/$id': typeof TaiSanIdRouteWithChildren
+  '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
@@ -196,7 +196,7 @@ export interface FileRoutesById {
   '/rao-ban/': typeof RaoBanIndexRoute
   '/tai-san/': typeof TaiSanIndexRoute
   '/thu-chi/': typeof ThuChiIndexRoute
-  '/tai-san/$id/sua': typeof TaiSanIdSuaRoute
+  '/tai-san/$id_/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -264,7 +264,7 @@ export interface FileRouteTypes {
     | '/rao-ban/'
     | '/tai-san/'
     | '/thu-chi/'
-    | '/tai-san/$id/sua'
+    | '/tai-san/$id_/sua'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -279,7 +279,7 @@ export interface RootRouteChildren {
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   HopDongIdRoute: typeof HopDongIdRoute
   HopDongMoiRoute: typeof HopDongMoiRoute
-  TaiSanIdRoute: typeof TaiSanIdRouteWithChildren
+  TaiSanIdRoute: typeof TaiSanIdRoute
   TaiSanMoiRoute: typeof TaiSanMoiRoute
   DoiTacIndexRoute: typeof DoiTacIndexRoute
   HopDongIndexRoute: typeof HopDongIndexRoute
@@ -287,50 +287,16 @@ export interface RootRouteChildren {
   RaoBanIndexRoute: typeof RaoBanIndexRoute
   TaiSanIndexRoute: typeof TaiSanIndexRoute
   ThuChiIndexRoute: typeof ThuChiIndexRoute
+  TaiSanIdSuaRoute: typeof TaiSanIdSuaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/confirm-email': {
-      id: '/confirm-email'
-      path: '/confirm-email'
-      fullPath: '/confirm-email'
-      preLoaderRoute: typeof ConfirmEmailRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/403': {
@@ -340,81 +306,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof R403RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/confirm-email': {
+      id: '/confirm-email'
+      path: '/confirm-email'
+      fullPath: '/confirm-email'
+      preLoaderRoute: typeof ConfirmEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/thu-chi/': {
-      id: '/thu-chi/'
-      path: '/thu-chi'
-      fullPath: '/thu-chi/'
-      preLoaderRoute: typeof ThuChiIndexRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tai-san/': {
-      id: '/tai-san/'
-      path: '/tai-san'
-      fullPath: '/tai-san/'
-      preLoaderRoute: typeof TaiSanIndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rao-ban/': {
-      id: '/rao-ban/'
-      path: '/rao-ban'
-      fullPath: '/rao-ban/'
-      preLoaderRoute: typeof RaoBanIndexRouteImport
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/nhac-lich/': {
-      id: '/nhac-lich/'
-      path: '/nhac-lich'
-      fullPath: '/nhac-lich/'
-      preLoaderRoute: typeof NhacLichIndexRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hop-dong/': {
-      id: '/hop-dong/'
-      path: '/hop-dong'
-      fullPath: '/hop-dong/'
-      preLoaderRoute: typeof HopDongIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/doi-tac/': {
-      id: '/doi-tac/'
-      path: '/doi-tac'
-      fullPath: '/doi-tac/'
-      preLoaderRoute: typeof DoiTacIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tai-san/moi': {
-      id: '/tai-san/moi'
-      path: '/tai-san/moi'
-      fullPath: '/tai-san/moi'
-      preLoaderRoute: typeof TaiSanMoiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tai-san/$id': {
-      id: '/tai-san/$id'
-      path: '/tai-san/$id'
-      fullPath: '/tai-san/$id'
-      preLoaderRoute: typeof TaiSanIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hop-dong/moi': {
-      id: '/hop-dong/moi'
-      path: '/hop-dong/moi'
-      fullPath: '/hop-dong/moi'
-      preLoaderRoute: typeof HopDongMoiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hop-dong/$id': {
-      id: '/hop-dong/$id'
-      path: '/hop-dong/$id'
-      fullPath: '/hop-dong/$id'
-      preLoaderRoute: typeof HopDongIdRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/properties': {
@@ -424,27 +355,85 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertiesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tai-san/$id/sua': {
-      id: '/tai-san/$id/sua'
-      path: '/sua'
+    '/doi-tac/': {
+      id: '/doi-tac/'
+      path: '/doi-tac'
+      fullPath: '/doi-tac/'
+      preLoaderRoute: typeof DoiTacIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hop-dong/': {
+      id: '/hop-dong/'
+      path: '/hop-dong'
+      fullPath: '/hop-dong/'
+      preLoaderRoute: typeof HopDongIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hop-dong/$id': {
+      id: '/hop-dong/$id'
+      path: '/hop-dong/$id'
+      fullPath: '/hop-dong/$id'
+      preLoaderRoute: typeof HopDongIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hop-dong/moi': {
+      id: '/hop-dong/moi'
+      path: '/hop-dong/moi'
+      fullPath: '/hop-dong/moi'
+      preLoaderRoute: typeof HopDongMoiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nhac-lich/': {
+      id: '/nhac-lich/'
+      path: '/nhac-lich'
+      fullPath: '/nhac-lich/'
+      preLoaderRoute: typeof NhacLichIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rao-ban/': {
+      id: '/rao-ban/'
+      path: '/rao-ban'
+      fullPath: '/rao-ban/'
+      preLoaderRoute: typeof RaoBanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/': {
+      id: '/tai-san/'
+      path: '/tai-san'
+      fullPath: '/tai-san/'
+      preLoaderRoute: typeof TaiSanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/$id': {
+      id: '/tai-san/$id'
+      path: '/tai-san/$id'
+      fullPath: '/tai-san/$id'
+      preLoaderRoute: typeof TaiSanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/moi': {
+      id: '/tai-san/moi'
+      path: '/tai-san/moi'
+      fullPath: '/tai-san/moi'
+      preLoaderRoute: typeof TaiSanMoiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/thu-chi/': {
+      id: '/thu-chi/'
+      path: '/thu-chi'
+      fullPath: '/thu-chi/'
+      preLoaderRoute: typeof ThuChiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tai-san/$id_/sua': {
+      id: '/tai-san/$id_/sua'
+      path: '/tai-san/$id/sua'
       fullPath: '/tai-san/$id/sua'
       preLoaderRoute: typeof TaiSanIdSuaRouteImport
-      parentRoute: typeof TaiSanIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface TaiSanIdRouteChildren {
-  TaiSanIdSuaRoute: typeof TaiSanIdSuaRoute
-}
-
-const TaiSanIdRouteChildren: TaiSanIdRouteChildren = {
-  TaiSanIdSuaRoute: TaiSanIdSuaRoute,
-}
-
-const TaiSanIdRouteWithChildren = TaiSanIdRoute._addFileChildren(
-  TaiSanIdRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -458,7 +447,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPropertiesRoute: AdminPropertiesRoute,
   HopDongIdRoute: HopDongIdRoute,
   HopDongMoiRoute: HopDongMoiRoute,
-  TaiSanIdRoute: TaiSanIdRouteWithChildren,
+  TaiSanIdRoute: TaiSanIdRoute,
   TaiSanMoiRoute: TaiSanMoiRoute,
   DoiTacIndexRoute: DoiTacIndexRoute,
   HopDongIndexRoute: HopDongIndexRoute,
@@ -466,7 +455,18 @@ const rootRouteChildren: RootRouteChildren = {
   RaoBanIndexRoute: RaoBanIndexRoute,
   TaiSanIndexRoute: TaiSanIndexRoute,
   ThuChiIndexRoute: ThuChiIndexRoute,
+  TaiSanIdSuaRoute: TaiSanIdSuaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
