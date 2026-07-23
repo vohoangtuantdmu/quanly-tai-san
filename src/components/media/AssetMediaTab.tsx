@@ -104,7 +104,7 @@ export function AssetMediaTab({ assetId }: { assetId: string }) {
   };
 
   const handleThumbFromUrl = async (item: {
-    file: { url: string; fileName?: string; contentType?: string };
+    file: { url: string; fileName?: string | null; contentType?: string | null };
   }) => {
     try {
       const res = await fetch(item.file.url);
