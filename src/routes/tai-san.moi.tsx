@@ -59,7 +59,9 @@ function NewAsset() {
   const mutation = useMutation({
     mutationFn: (body: CreateAssetInput) => assetsApi.create(body),
     onSuccess: (created) => {
-      toast.success("Đã tạo tài sản");
+      toast.success("Đã tạo tài sản thành công.", {
+        description: "Mẹo: thêm ảnh đại diện để tài sản dễ nhận diện hơn.",
+      });
       qc.invalidateQueries({ queryKey: ["assets"] });
       navigate({ to: "/tai-san/$id", params: { id: created.id } });
     },
