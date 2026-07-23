@@ -1,59 +1,230 @@
 import { api, toQuery } from "./http";
 import { apiForm } from "./http";
+import { ApiError } from "@/lib/auth/types";
 import type {
-  AssetSummaryDto,
-  AssetDetailDto,
-  AssetCreateRequest,
-  AssetUpdateRequest,
-  AssetSearchQuery,
-  AssetNearbyDto,
-  AssetUnitDto,
-  AssetUnitRequest,
-  AssetMediaDto,
-  AddressDto,
-  GeoPointDto,
-  StoredFileDto,
-  PagedResult,
-} from "@/types/asset";
+  AssetStatusCode,
+  AssetTypeCode,
+  EquipmentConditionCode,
+  EquipmentSourceCode,
+  OccupantTypeCode,
+  OwnershipTypeCode,
+  SaleListingStatusCode,
+  UnitStatusCode,
+} from "@/constants/enums";
 
-// Re-export spec types (nguồn sự thật duy nhất là src/types/asset.ts).
-export type {
-  AssetSummaryDto,
-  AssetDetailDto,
-  AssetCreateRequest,
-  AssetUpdateRequest,
-  AssetSearchQuery,
-  AssetNearbyDto,
-  AssetUnitDto,
-  AssetUnitRequest,
-  AssetMediaDto,
-  AddressDto,
-  GeoPointDto,
-  StoredFileDto,
-  PagedResult,
-} from "@/types/asset";
+// ---- Types ----
+export interface AssetAddress {
+  city: string;
+  district: string;
+  ward: string;
+  detail?: string | null;
+}
 
-// Legacy aliases để tránh phải sửa hết callers cùng lúc.
-export type AssetListItem = AssetSummaryDto;
-export type AssetDetail = AssetDetailDto;
-export type CreateAssetInput = AssetCreateRequest;
-export type UpdateAssetInput = AssetUpdateRequest;
-export type NearbyAsset = AssetNearbyDto;
-export type AssetUnit = AssetUnitDto;
-export type UnitInput = AssetUnitRequest;
-export type AssetMediaItem = AssetMediaDto;
-export type AssetMediaFile = StoredFileDto;
-export type AssetAddress = AddressDto;
-export type GeoLocation = GeoPointDto;
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+}
 
-// Filter dùng ở UI: cho phép "" để tương thích Select "all".
-export interface AssetListFilters extends Omit<
-  AssetSearchQuery,
-  "type" | "status" | "ownershipType"
-> {
-  type?: AssetSearchQuery["type"] | "";
-  status?: AssetSearchQuery["status"] | "";
-  ownershipType?: AssetSearchQuery["ownershipType"] | "";
+export interface AssetListItem {
+  id: string;
+  name: string;
+  type: AssetTypeCode;
+  ownershipType: OwnershipTypeCode;
+  status: AssetStatusCode;
+  city: string;
+  district: string;
+  currentValue: number | null;
+  thumbnailUrl: string | null;
+  linkedPropertyId?: string | null;
+}
+
+export interface AssetMediaFile {
+  url: string;
+  fileName?: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
+export interface AssetDetail {
+  id: string;
+  name: string;
+  type: AssetTypeCode;
+  ownershipType: OwnershipTypeCode;
+  status: AssetStatusCode;
+  address: AssetAddress;
+  location: GeoLocation | null;
+  area: number | null;
+  currentValue: number | null;
+  acquisitionDate: string | null;
+  notes: string | null;
+  thumbnail: AssetMediaFile | null;
+  linkedPropertyId: string | null;
+  unitCount: number;
+  activeContractCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAssetInput {
+  name: string;
+  type: AssetTypeCode;
+  ownershipType: OwnershipTypeCode;
+  address: AssetAddress;
+  location?: GeoLocation | null;
+  area?: number | null;
+  currentValue?: number | null;
+  acquisitionDate?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateAssetInput extends CreateAssetInput {
+  status: AssetStatusCode;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface AssetListFilters {
+  keyword?: string;
+  type?: AssetTypeCode | "";
+  status?: AssetStatusCode | "";
+  ownershipType?: OwnershipTypeCode | "";
+  city?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface NearbyAsset {
+  id: string;
+  name: string;
+  type: AssetTypeCode;
+  status: AssetStatusCode;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+}
+
+// ---- Units ----
+export interface AssetUnit {
+  id: string;
+  name: string;
+  floorNumber: number | null;
+  area: number | null;
+  status: UnitStatusCode;
+  notes: string | null;
+}
+
+export interface UnitInput {
+  name: string;
+  floorNumber?: number | null;
+  area?: number | null;
+  status?: UnitStatusCode;
+  notes?: string | null;
+}
+
+// ---- Media ----
+export interface AssetMediaItem {
+  id: string;
+  file: AssetMediaFile;
+  caption: string | null;
+  takenAt: string | null;
+  sortOrder: number;
+}
+
+// ---- Nhóm D: Vận hành ----
+export interface EquipmentDto {
+  id: string;
+  assetUnitId: string | null;
+  name: string;
+  quantity: number;
+  condition: EquipmentConditionCode;
+  source: EquipmentSourceCode;
+  notes: string | null;
+}
+
+export interface EquipmentInput {
+  assetUnitId?: string | null;
+  name: string;
+  quantity: number;
+  condition: EquipmentConditionCode;
+  source: EquipmentSourceCode;
+  notes?: string | null;
+}
+
+export interface UsagePeriodDto {
+  id: string;
+  occupantType: OccupantTypeCode;
+  occupantName: string | null;
+  startDate: string;
+  endDate: string | null;
+  notes: string | null;
+}
+
+export interface UsagePeriodInput {
+  occupantType: OccupantTypeCode;
+  occupantName?: string | null;
+  startDate: string;
+  endDate?: string | null;
+  notes?: string | null;
+}
+
+export interface MaintenanceDto {
+  id: string;
+  assetUnitId: string | null;
+  title: string;
+  description: string | null;
+  startDate: string;
+  completedDate: string | null;
+  cost: number | null;
+  vendorId: string | null;
+  vendorName: string | null;
+  notes: string | null;
+}
+
+export interface MaintenanceInput {
+  assetUnitId?: string | null;
+  title: string;
+  description?: string | null;
+  startDate: string;
+  completedDate?: string | null;
+  cost?: number | null;
+  vendorId?: string | null;
+  notes?: string | null;
+  recordAsExpense: boolean;
+}
+
+export interface SaleListingBroker {
+  brokerId: string;
+  brokerName: string;
+  phone: string | null;
+  sentAt: string;
+  notes: string | null;
+}
+
+export interface SaleListingDto {
+  id: string;
+  assetId: string;
+  askingPrice: number;
+  status: SaleListingStatusCode;
+  listedAt: string;
+  agreementNotes: string | null;
+  brokers: SaleListingBroker[];
+}
+
+export interface SaleListingCreateInput {
+  askingPrice: number;
+  agreementNotes?: string | null;
+}
+
+export interface SaleListingUpdateInput {
+  askingPrice: number;
+  status: SaleListingStatusCode;
+  agreementNotes?: string | null;
 }
 
 // ---- API functions ----
@@ -105,5 +276,60 @@ export const assetsApi = {
     },
     setThumbnailFromMedia: (assetId: string, mediaId: string) =>
       api<AssetDetail>(`/assets/${assetId}/thumbnail/from-media/${mediaId}`, { method: "PUT" }),
+  },
+
+  equipment: {
+    list: (assetId: string) => api<EquipmentDto[]>(`/assets/${assetId}/equipment`),
+    create: (assetId: string, body: EquipmentInput) =>
+      api<EquipmentDto>(`/assets/${assetId}/equipment`, { method: "POST", body }),
+    update: (assetId: string, equipmentId: string, body: EquipmentInput) =>
+      api<EquipmentDto>(`/assets/${assetId}/equipment/${equipmentId}`, { method: "PUT", body }),
+    remove: (assetId: string, equipmentId: string) =>
+      api<void>(`/assets/${assetId}/equipment/${equipmentId}`, { method: "DELETE" }),
+  },
+
+  usagePeriods: {
+    list: (assetId: string) => api<UsagePeriodDto[]>(`/assets/${assetId}/usage-periods`),
+    create: (assetId: string, body: UsagePeriodInput) =>
+      api<UsagePeriodDto>(`/assets/${assetId}/usage-periods`, { method: "POST", body }),
+    update: (assetId: string, periodId: string, body: UsagePeriodInput) =>
+      api<UsagePeriodDto>(`/assets/${assetId}/usage-periods/${periodId}`, {
+        method: "PUT",
+        body,
+      }),
+    remove: (assetId: string, periodId: string) =>
+      api<void>(`/assets/${assetId}/usage-periods/${periodId}`, { method: "DELETE" }),
+  },
+
+  maintenance: {
+    list: (assetId: string) => api<MaintenanceDto[]>(`/assets/${assetId}/maintenance`),
+    create: (assetId: string, body: MaintenanceInput) =>
+      api<MaintenanceDto>(`/assets/${assetId}/maintenance`, { method: "POST", body }),
+    update: (assetId: string, recordId: string, body: MaintenanceInput) =>
+      api<MaintenanceDto>(`/assets/${assetId}/maintenance/${recordId}`, { method: "PUT", body }),
+    remove: (assetId: string, recordId: string) =>
+      api<void>(`/assets/${assetId}/maintenance/${recordId}`, { method: "DELETE" }),
+  },
+
+  saleListing: {
+    // 404 = tài sản chưa có tin rao bán → trả null thay vì ném lỗi
+    get: async (assetId: string): Promise<SaleListingDto | null> => {
+      try {
+        return await api<SaleListingDto>(`/assets/${assetId}/sale-listing`);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
+      }
+    },
+    create: (assetId: string, body: SaleListingCreateInput) =>
+      api<SaleListingDto>(`/assets/${assetId}/sale-listing`, { method: "POST", body }),
+    update: (assetId: string, body: SaleListingUpdateInput) =>
+      api<SaleListingDto>(`/assets/${assetId}/sale-listing`, { method: "PUT", body }),
+    addBroker: (assetId: string, body: { brokerId: string; notes?: string | null }) =>
+      api<SaleListingDto>(`/assets/${assetId}/sale-listing/brokers`, { method: "POST", body }),
+    removeBroker: (assetId: string, brokerId: string) =>
+      api<void>(`/assets/${assetId}/sale-listing/brokers/${brokerId}`, { method: "DELETE" }),
+    markSold: (assetId: string) =>
+      api<SaleListingDto>(`/assets/${assetId}/sale-listing/mark-sold`, { method: "POST" }),
   },
 };
