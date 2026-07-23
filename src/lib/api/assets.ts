@@ -134,7 +134,9 @@ export interface AssetMediaItem {
 // ---- API functions ----
 export const assetsApi = {
   list: (f: AssetListFilters = {}) =>
-    api<PagedResult<AssetListItem>>(`/assets${toQuery({ ...f, page: f.page ?? 1, pageSize: f.pageSize ?? 20 })}`),
+    api<PagedResult<AssetListItem>>(
+      `/assets${toQuery({ ...f, page: f.page ?? 1, pageSize: f.pageSize ?? 20 })}`,
+    ),
   detail: (id: string) => api<AssetDetail>(`/assets/${id}`),
   create: (body: CreateAssetInput) => api<AssetDetail>("/assets", { method: "POST", body }),
   update: (id: string, body: UpdateAssetInput) =>
@@ -176,5 +178,7 @@ export const assetsApi = {
       fd.append("file", file);
       return apiForm<AssetDetail>(`/assets/${assetId}/thumbnail`, fd, "PUT");
     },
+    setThumbnailFromMedia: (assetId: string, mediaId: string) =>
+      api<AssetDetail>(`/assets/${assetId}/thumbnail/from-media/${mediaId}`, { method: "PUT" }),
   },
 };

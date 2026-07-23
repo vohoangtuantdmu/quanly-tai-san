@@ -68,7 +68,7 @@ export function AssetMediaTab({ assetId }: { assetId: string }) {
   });
 
   const setThumb = useMutation({
-    mutationFn: (file: File) => assetsApi.media.setThumbnail(assetId, file),
+    mutationFn: (mediaId: string) => assetsApi.media.setThumbnailFromMedia(assetId, mediaId),
     onSuccess: () => {
       toast.success("Đã đặt làm ảnh đại diện");
       qc.invalidateQueries({ queryKey: ["asset", assetId] });
@@ -101,21 +101,6 @@ export function AssetMediaTab({ assetId }: { assetId: string }) {
       if (target) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((p) => p.previewUrl !== url);
     });
-  };
-
-  const handleThumbFromUrl = async (item: {
-    file: { url: string; fileName?: string; contentType?: string };
-  }) => {
-    try {
-      const res = await fetch(item.file.url);
-      const blob = await res.blob();
-      const file = new File([blob], item.file.fileName ?? "thumbnail.jpg", {
-        type: item.file.contentType ?? blob.type,
-      });
-      setThumb.mutate(file);
-    } catch {
-      toast.error("Không tải lại được ảnh để đặt đại diện");
-    }
   };
 
   if (query.isLoading) {
@@ -253,7 +238,7 @@ export function AssetMediaTab({ assetId }: { assetId: string }) {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => handleThumbFromUrl(m)}
+                  onClick={() => setThumb.mutate(m.id)}
                   disabled={setThumb.isPending}
                 >
                   <Star className="h-3.5 w-3.5 mr-1" />
