@@ -201,7 +201,6 @@ function UnitFormDialog({
                 name: name.trim(),
                 floorNumber: floor === "" ? null : Number(floor),
                 area: area === "" ? null : Number(area),
-                status: initial ? status : 1,
                 notes: notes.trim() || null,
               });
             }}
