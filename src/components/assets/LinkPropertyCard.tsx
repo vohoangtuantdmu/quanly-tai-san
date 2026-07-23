@@ -15,14 +15,14 @@ import { Link2, Link2Off, ExternalLink } from "lucide-react";
  * Card liên kết tài sản với tin đăng (Property).
  * TODO: thay ô nhập Property ID bằng dropdown chọn từ GET /api/properties khi API sẵn sàng.
  */
-export function LinkPropertyCard({ assetId, linkedPropertyId }: { assetId: string; linkedPropertyId: string | null }) {
+export function LinkPropertyCard({ assetId, linkedPropertyId }: { assetId: string; linkedPropertyId: number | null }) {
   const qc = useQueryClient();
   const [openLink, setOpenLink] = useState(false);
   const [openUnlink, setOpenUnlink] = useState(false);
   const [propertyId, setPropertyId] = useState("");
 
   const linkMut = useMutation({
-    mutationFn: (pid: string) => assetsApi.linkProperty(assetId, pid),
+    mutationFn: (pid: number) => assetsApi.linkProperty(assetId, pid),
     onSuccess: () => {
       toast.success("Đã liên kết với tin đăng");
       qc.invalidateQueries({ queryKey: ["asset", assetId] });
@@ -82,7 +82,7 @@ export function LinkPropertyCard({ assetId, linkedPropertyId }: { assetId: strin
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenLink(false)} disabled={linkMut.isPending}>Huỷ</Button>
-            <Button onClick={() => propertyId && linkMut.mutate(propertyId)} disabled={!propertyId || linkMut.isPending}>
+            <Button onClick={() => propertyId && linkMut.mutate(Number(propertyId))} disabled={!propertyId || linkMut.isPending}>
               {linkMut.isPending ? "Đang liên kết..." : "Liên kết"}
             </Button>
           </DialogFooter>
