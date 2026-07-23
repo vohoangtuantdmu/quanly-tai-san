@@ -1,166 +1,428 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useStore } from "@/lib/store";
-import { formatDate, daysUntil } from "@/lib/format";
+import { useState } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { remindersApi, type ReminderDto, type ReminderFilters } from "@/lib/api/reminders";
+import { assetsApi } from "@/lib/api/assets";
+import { toIsoUtc } from "@/lib/api/contracts";
+import { getErrorMessage } from "@/lib/api/errors";
+import { formatDate } from "@/lib/format";
+import {
+  REMINDER_TYPE,
+  REMINDER_TYPE_CLASS,
+  RECURRENCE_CYCLE,
+  enumOptions,
+  type RecurrenceCycleCode,
+  type ReminderTypeCode,
+} from "@/constants/enums";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, Bell, Calendar as CalIcon } from "lucide-react";
-import { toast } from "sonner";
-import type { ReminderType, ReminderCycle } from "@/lib/types";
+import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Trash2, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/nhac-lich/")({
   head: () => ({ meta: [{ title: "Nhắc lịch — Quản Lý Tài Sản" }] }),
-  component: Reminders,
+  component: RemindersPage,
 });
 
-const typeIcon: Record<ReminderType, string> = {
-  "Thu tiền thuê": "bg-success/15 text-success border-success/30",
-  "Đóng tiền thuê": "bg-destructive/15 text-destructive border-destructive/30",
-  "Bảo dưỡng": "bg-info/15 text-info border-info/30",
-  "Hết hạn hợp đồng": "bg-warning/20 text-warning-foreground border-warning/40",
-  "Đóng thuế": "bg-primary/10 text-primary border-primary/30",
-  "Thanh toán hoá đơn": "bg-secondary text-secondary-foreground border-border",
-};
+type ActiveFilter = "all" | "on" | "off";
 
-function Reminders() {
-  const store = useStore();
-  const [fType, setFType] = useState<ReminderType | "all">("all");
-  const [open, setOpen] = useState(false);
+function RemindersPage() {
+  const qc = useQueryClient();
+  const [fActive, setFActive] = useState<ActiveFilter>("all");
+  const [page, setPage] = useState(1);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleting, setDeleting] = useState<ReminderDto | null>(null);
 
-  const filtered = useMemo(() =>
-    store.reminders.filter((r) => fType === "all" || r.type === fType)
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
-    [store.reminders, fType]);
+  const filters: ReminderFilters = {
+    isActive: fActive === "all" ? "" : fActive === "on",
+    page,
+    pageSize: 20,
+  };
+  const query = useQuery({
+    queryKey: ["reminders", filters],
+    queryFn: () => remindersApi.list(filters),
+    placeholderData: keepPreviousData,
+    retry: 1,
+  });
+
+  // Toggle bật/tắt inline — PUT ngay khi click với dữ liệu hiện tại của dòng
+  const toggle = useMutation({
+    mutationFn: (r: ReminderDto) =>
+      remindersApi.update(r.id, {
+        title: r.title,
+        dueDate: r.dueDate,
+        cycle: r.cycle,
+        notifyDaysBefore: r.notifyDaysBefore,
+        isActive: !r.isActive,
+      }),
+    onSuccess: (_d, r) => {
+      toast.success(r.isActive ? "Đã tắt nhắc lịch" : "Đã bật nhắc lịch");
+      qc.invalidateQueries({ queryKey: ["reminders"] });
+    },
+    onError: (err) => toast.error(getErrorMessage(err, "Không cập nhật được nhắc lịch")),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => remindersApi.remove(id),
+    onSuccess: () => {
+      toast.success("Đã xoá nhắc lịch");
+      setDeleting(null);
+      qc.invalidateQueries({ queryKey: ["reminders"] });
+    },
+    onError: (err) => toast.error(getErrorMessage(err, "Không xoá được nhắc lịch")),
+  });
+
+  const data = query.data;
+  const rows = data?.items ?? [];
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px]">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Nhắc lịch</h1>
-          <p className="text-sm text-muted-foreground mt-1">Danh sách nhắc nhở cho thu chi, bảo dưỡng, thuế, hợp đồng.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Danh sách nhắc nhở cho thu chi, bảo dưỡng, thuế, hợp đồng.
+          </p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo nhắc lịch</Button>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-1.5" />
+          Thêm nhắc lịch
+        </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-4 max-w-md">
-          <Label className="text-xs">Lọc theo loại</Label>
-          <Select value={fType} onValueChange={(v) => setFType(v as ReminderType | "all")}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              {Object.keys(typeIcon).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <Tabs
+        value={fActive}
+        onValueChange={(v) => {
+          setFActive(v as ActiveFilter);
+          setPage(1);
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="all">Tất cả</TabsTrigger>
+          <TabsTrigger value="on">Đang bật</TabsTrigger>
+          <TabsTrigger value="off">Đã tắt</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow><TableHead>Tiêu đề</TableHead><TableHead>Loại</TableHead><TableHead>Tài sản</TableHead><TableHead>Đến hạn</TableHead><TableHead>Lặp lại</TableHead><TableHead>Bật</TableHead><TableHead></TableHead></TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => {
-                const asset = r.assetId ? store.assets.find((a) => a.id === r.assetId) : null;
-                const days = daysUntil(r.dueDate);
-                return (
-                  <TableRow key={r.id} className={!r.enabled ? "opacity-60" : ""}>
+          {query.isLoading ? (
+            <div className="p-4 space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : query.isError ? (
+            <div className="py-10 text-center text-sm text-destructive">
+              {getErrorMessage(query.error, "Không tải được danh sách nhắc lịch")}
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="py-14 text-center text-sm text-muted-foreground">
+              <Bell className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
+              Chưa có nhắc lịch nào.
+              <div className="mt-3">
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Thêm nhắc lịch
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tiêu đề</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Tài sản</TableHead>
+                  <TableHead>Ngày đến hạn</TableHead>
+                  <TableHead>Chu kỳ</TableHead>
+                  <TableHead>Báo trước</TableHead>
+                  <TableHead className="text-center">Bật</TableHead>
+                  <TableHead className="w-14"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((r) => (
+                  <TableRow key={r.id} className={r.isActive ? "" : "opacity-60"}>
+                    <TableCell className="font-medium">{r.title}</TableCell>
                     <TableCell>
-                      <div className="font-medium flex items-center gap-2"><Bell className="h-3.5 w-3.5 text-primary" />{r.title}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Báo trước {r.daysBefore} ngày</div>
+                      <Badge variant="outline" className={REMINDER_TYPE_CLASS[r.type]}>
+                        {REMINDER_TYPE[r.type]}
+                      </Badge>
                     </TableCell>
-                    <TableCell><Badge variant="outline" className={typeIcon[r.type]}>{r.type}</Badge></TableCell>
-                    <TableCell className="text-sm">{asset?.name ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {r.assetName ?? "—"}
+                    </TableCell>
+                    <TableCell>{formatDate(r.dueDate)}</TableCell>
+                    <TableCell className="text-sm">{RECURRENCE_CYCLE[r.cycle]}</TableCell>
+                    <TableCell className="text-sm">{r.notifyDaysBefore} ngày</TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={r.isActive}
+                        disabled={toggle.isPending}
+                        onCheckedChange={() => toggle.mutate(r)}
+                      />
+                    </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 text-sm"><CalIcon className="h-3.5 w-3.5 text-muted-foreground" />{formatDate(r.dueDate)}</div>
-                      <div className={`text-xs mt-0.5 ${days < 0 ? "text-destructive" : days <= 7 ? "text-warning-foreground" : "text-muted-foreground"}`}>
-                        {days < 0 ? `Đã quá ${Math.abs(days)} ngày` : days === 0 ? "Hôm nay" : `Còn ${days} ngày`}
-                      </div>
+                      <Button size="icon" variant="ghost" onClick={() => setDeleting(r)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
-                    <TableCell><Badge variant="outline">{r.cycle}</Badge></TableCell>
-                    <TableCell><Switch checked={r.enabled} onCheckedChange={(v) => store.updateReminder(r.id, { enabled: v })} /></TableCell>
-                    <TableCell><Button size="icon" variant="ghost" onClick={() => { store.deleteReminder(r.id); toast.success("Đã xoá"); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      <AddReminderDialog open={open} onOpenChange={setOpen} />
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Trang trước
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Trang {data.page}/{data.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= data.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Trang sau
+          </Button>
+        </div>
+      )}
+
+      <CreateReminderDialog
+        key={String(createOpen)}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+      />
+
+      <AlertDialog open={!!deleting} onOpenChange={(v) => !v && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xoá nhắc lịch?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Nhắc lịch <b>{deleting?.title}</b> sẽ bị xoá vĩnh viễn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={del.isPending}
+              onClick={(ev) => {
+                ev.preventDefault();
+                if (deleting) del.mutate(deleting.id);
+              }}
+            >
+              {del.isPending ? "Đang xoá..." : "Xoá"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function AddReminderDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const store = useStore();
+function CreateReminderDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const qc = useQueryClient();
+  const [type, setType] = useState<ReminderTypeCode>(1);
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<ReminderType>("Bảo dưỡng");
-  const [assetId, setAssetId] = useState<string>("");
-  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
-  const [cycle, setCycle] = useState<ReminderCycle>("Không lặp");
-  const [daysBefore, setDaysBefore] = useState(3);
+  const [dueDate, setDueDate] = useState("");
+  const [cycle, setCycle] = useState<RecurrenceCycleCode>(0);
+  const [notifyDaysBefore, setNotifyDaysBefore] = useState(3);
+  const [assetId, setAssetId] = useState("");
 
-  const handleSave = () => {
-    if (!title.trim()) { toast.error("Vui lòng nhập tiêu đề"); return; }
-    store.addReminder({
-      id: `r-${Date.now()}`, title, type,
-      assetId: assetId || undefined,
-      dueDate: new Date(dueDate).toISOString(),
-      cycle, daysBefore, enabled: true,
-    });
-    toast.success("Đã tạo nhắc lịch");
-    setTitle("");
-    onOpenChange(false);
+  const assetsQ = useQuery({
+    queryKey: ["assets", { pageSize: 200 }],
+    queryFn: () => assetsApi.list({ pageSize: 200 }),
+    enabled: open,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const create = useMutation({
+    mutationFn: () =>
+      remindersApi.create({
+        assetId: assetId || null,
+        type,
+        title: title.trim(),
+        dueDate: toIsoUtc(dueDate),
+        cycle,
+        notifyDaysBefore,
+      }),
+    onSuccess: () => {
+      toast.success("Đã tạo nhắc lịch");
+      qc.invalidateQueries({ queryKey: ["reminders"] });
+      onOpenChange(false);
+    },
+    onError: (err) => toast.error(getErrorMessage(err, "Không tạo được nhắc lịch")),
+  });
+
+  const submit = () => {
+    if (!title.trim()) {
+      toast.error("Vui lòng nhập tiêu đề");
+      return;
+    }
+    if (!dueDate) {
+      toast.error("Vui lòng chọn ngày đến hạn");
+      return;
+    }
+    if (notifyDaysBefore < 0) {
+      toast.error("Số ngày báo trước không hợp lệ");
+      return;
+    }
+    create.mutate();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => !create.isPending && onOpenChange(v)}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Tạo nhắc lịch mới</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Thêm nhắc lịch</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-2"><Label>Tiêu đề *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bảo dưỡng máy lạnh 6 tháng" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Loại</Label>
-              <Select value={type} onValueChange={(v) => setType(v as ReminderType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.keys(typeIcon).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              <Label>Loại *</Label>
+              <Select
+                value={String(type)}
+                onValueChange={(v) => setType(Number(v) as ReminderTypeCode)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {enumOptions(REMINDER_TYPE).map((o) => (
+                    <SelectItem key={o.value} value={String(o.value)}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Chu kỳ lặp</Label>
-              <Select value={cycle} onValueChange={(v) => setCycle(v as ReminderCycle)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{["Không lặp", "Tháng", "Quý", "Nửa năm", "Năm"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-              </Select>
+              <Label>Ngày đến hạn *</Label>
+              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Tài sản (tuỳ chọn)</Label>
-            <Select value={assetId} onValueChange={setAssetId}>
-              <SelectTrigger><SelectValue placeholder="Không gắn tài sản" /></SelectTrigger>
-              <SelectContent>{store.assets.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
-            </Select>
+            <Label>Tiêu đề *</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="VD: Thu tiền thuê nhà phố Quận 7"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2"><Label>Đến hạn</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Báo trước (ngày)</Label><Input type="number" value={daysBefore} onChange={(e) => setDaysBefore(Number(e.target.value))} /></div>
+            <div className="space-y-2">
+              <Label>Chu kỳ lặp</Label>
+              <Select
+                value={String(cycle)}
+                onValueChange={(v) => setCycle(Number(v) as RecurrenceCycleCode)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {enumOptions(RECURRENCE_CYCLE).map((o) => (
+                    <SelectItem key={o.value} value={String(o.value)}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Báo trước (ngày)</Label>
+              <Input
+                type="number"
+                min={0}
+                value={notifyDaysBefore}
+                onChange={(e) => setNotifyDaysBefore(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Tài sản liên quan (tuỳ chọn)</Label>
+            <Select
+              value={assetId || "none"}
+              onValueChange={(v) => setAssetId(v === "none" ? "" : v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Không gắn tài sản</SelectItem>
+                {(assetsQ.data?.items ?? []).map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Huỷ</Button>
-          <Button onClick={handleSave}>Tạo</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
+            Huỷ
+          </Button>
+          <Button onClick={submit} disabled={create.isPending}>
+            {create.isPending ? "Đang tạo..." : "Tạo nhắc lịch"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

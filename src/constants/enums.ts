@@ -121,6 +121,90 @@ export const EXPENSE_CATEGORIES: CashFlowCategoryCode[] = [
   10, 11, 12, 13, 14, 15, 16, 20, 21, 22, 23, 24, 29, 99,
 ];
 
+// ---- Nhóm D: Vận hành ----
+
+export const REMINDER_TYPE = {
+  1: "Thu tiền thuê",
+  2: "Đóng tiền thuê",
+  3: "Bảo dưỡng",
+  4: "Hết hạn hợp đồng",
+  5: "Đóng thuế",
+  6: "Thanh toán hoá đơn",
+} as const;
+export type ReminderTypeCode = keyof typeof REMINDER_TYPE;
+
+export const REMINDER_TYPE_CLASS: Record<ReminderTypeCode, string> = {
+  1: "bg-success/15 text-success border-success/30",
+  2: "bg-destructive/15 text-destructive border-destructive/30",
+  3: "bg-info/15 text-info border-info/30",
+  4: "bg-warning/20 text-warning-foreground border-warning/40",
+  5: "bg-primary/10 text-primary border-primary/30",
+  6: "bg-secondary text-secondary-foreground border-border",
+};
+
+export const RECURRENCE_CYCLE = {
+  0: "Không lặp",
+  1: "Hàng tháng",
+  2: "Hàng quý",
+  3: "Nửa năm",
+  4: "Hàng năm",
+} as const;
+export type RecurrenceCycleCode = keyof typeof RECURRENCE_CYCLE;
+
+export const EQUIPMENT_CONDITION = {
+  1: "Mới",
+  2: "Tốt",
+  3: "Khá",
+  4: "Cần sửa",
+  5: "Hỏng",
+} as const;
+export type EquipmentConditionCode = keyof typeof EQUIPMENT_CONDITION;
+
+export const EQUIPMENT_CONDITION_CLASS: Record<EquipmentConditionCode, string> = {
+  1: "bg-success/15 text-success border-success/30",
+  2: "bg-success/15 text-success border-success/30",
+  3: "bg-warning/20 text-warning-foreground border-warning/40",
+  4: "bg-warning/20 text-warning-foreground border-warning/40",
+  5: "bg-destructive/15 text-destructive border-destructive/30",
+};
+
+export const EQUIPMENT_SOURCE = {
+  1: "Chủ nhà cung cấp",
+  2: "Nhận từ chủ nhà",
+  3: "Tự trang bị",
+} as const;
+export type EquipmentSourceCode = keyof typeof EQUIPMENT_SOURCE;
+
+export const OCCUPANT_TYPE = {
+  1: "Bản thân",
+  2: "Con cái/người thân",
+  3: "Người quen",
+  4: "Người thuê",
+} as const;
+export type OccupantTypeCode = keyof typeof OCCUPANT_TYPE;
+
+export const OCCUPANT_TYPE_CLASS: Record<OccupantTypeCode, string> = {
+  1: "bg-primary/10 text-primary border-primary/30",
+  2: "bg-info/15 text-info border-info/30",
+  3: "bg-secondary text-secondary-foreground border-border",
+  4: "bg-success/15 text-success border-success/30",
+};
+
+export const SALE_LISTING_STATUS = {
+  1: "Đang rao",
+  2: "Tạm dừng",
+  3: "Đã bán",
+  4: "Đã huỷ",
+} as const;
+export type SaleListingStatusCode = keyof typeof SALE_LISTING_STATUS;
+
+export const SALE_LISTING_STATUS_CLASS: Record<SaleListingStatusCode, string> = {
+  1: "bg-success/15 text-success border-success/30",
+  2: "bg-warning/20 text-warning-foreground border-warning/40",
+  3: "bg-info/15 text-info border-info/30",
+  4: "bg-muted text-muted-foreground border-border",
+};
+
 // Helper: chuyển object enum thành mảng { value, label } cho <Select>
 export function enumOptions<T extends Record<number, string>>(
   e: T,
