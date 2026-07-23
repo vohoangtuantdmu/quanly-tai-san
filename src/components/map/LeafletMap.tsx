@@ -58,11 +58,35 @@ interface Props {
 }
 
 export default function LeafletMap({
-  center, zoom = 13, markers = [], height = 400, onPick, pickerMarker, className,
+  center,
+  zoom = 13,
+  markers = [],
+  height = 400,
+  onPick,
+  pickerMarker,
+  className,
 }: Props) {
   return (
-    <div className={className} style={{ height, width: "100%", borderRadius: 8, overflow: "hidden" }}>
-      <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+    <div
+      className={className}
+      // isolation + z-0: nhốt z-index nội bộ của Leaflet (400–1000) trong stacking
+      // context riêng để bản đồ không đè lên Dialog/Popover (z-50)
+      style={{
+        height,
+        width: "100%",
+        borderRadius: 8,
+        overflow: "hidden",
+        position: "relative",
+        zIndex: 0,
+        isolation: "isolate",
+      }}
+    >
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom
+      >
         <TileLayer url={OSM_URL} attribution={OSM_ATTRIB} />
         <FlyTo lat={center[0]} lng={center[1]} zoom={zoom} />
         {onPick && <ClickPicker onPick={onPick} />}
