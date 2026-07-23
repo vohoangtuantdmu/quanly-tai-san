@@ -91,7 +91,39 @@ export const CONTACT_TYPE_CLASS: Record<ContactTypeCode, string> = {
   99: "bg-muted text-muted-foreground border-border",
 };
 
+export const CASH_FLOW_DIRECTION = { 1: "Thu", 2: "Chi" } as const;
+export type CashFlowDirectionCode = keyof typeof CASH_FLOW_DIRECTION;
+
+export const CASH_FLOW_CATEGORY = {
+  1: "Tiền thuê thu vào",
+  2: "Tiền cọc nhận",
+  3: "Tiền bán",
+  10: "Tiền thuê trả chủ nhà",
+  11: "Tiền cọc trả",
+  12: "Chi phí sửa chữa",
+  13: "Hoá đơn điện",
+  14: "Hoá đơn nước",
+  15: "Hoá đơn internet",
+  16: "Phí quản lý",
+  20: "Thuế trước bạ",
+  21: "Thuế phi nông nghiệp",
+  22: "Thuế môn bài",
+  23: "Thuế TNCN",
+  24: "Thuế GTGT",
+  29: "Thuế khác",
+  99: "Khác",
+} as const;
+export type CashFlowCategoryCode = keyof typeof CASH_FLOW_CATEGORY;
+
+// Lọc dropdown Loại theo Chiều đã chọn — "Khác" (99) chỉ hợp lệ với chiều Chi
+export const INCOME_CATEGORIES: CashFlowCategoryCode[] = [1, 2, 3];
+export const EXPENSE_CATEGORIES: CashFlowCategoryCode[] = [
+  10, 11, 12, 13, 14, 15, 16, 20, 21, 22, 23, 24, 29, 99,
+];
+
 // Helper: chuyển object enum thành mảng { value, label } cho <Select>
-export function enumOptions<T extends Record<number, string>>(e: T): { value: number; label: string }[] {
+export function enumOptions<T extends Record<number, string>>(
+  e: T,
+): { value: number; label: string }[] {
   return Object.entries(e).map(([k, v]) => ({ value: Number(k), label: v }));
 }
