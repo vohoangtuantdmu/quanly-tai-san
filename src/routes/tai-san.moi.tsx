@@ -72,7 +72,7 @@ function NewAsset() {
     mutation.mutate({
       name: name.trim(),
       type, ownershipType,
-      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() || null },
+      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() },
       location: location ? { latitude: location.lat, longitude: location.lng } : null,
       area: area ?? null,
       currentValue: ownershipType === 2 ? null : currentValue ?? null,
