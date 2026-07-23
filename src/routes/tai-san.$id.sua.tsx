@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
 
@@ -89,9 +90,8 @@ function EditAsset() {
     mutation.mutate({
       name: name.trim(),
       type,
-      ownershipType,
       status,
-      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() || null },
+      address: { city: city.trim(), district: district.trim(), ward: ward.trim(), detail: detail.trim() },
       location: query.data.location,
       area,
       currentValue: ownershipType === 2 ? null : currentValue,
@@ -118,10 +118,10 @@ function EditAsset() {
               </Select>
             </div>
             <div className="space-y-2"><Label>Hình thức</Label>
-              <Select value={String(ownershipType)} onValueChange={(v) => setOwnershipType(Number(v) as OwnershipTypeCode)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{enumOptions(OWNERSHIP_TYPE).map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <div className="h-10 flex items-center">
+                <Badge variant="secondary">{OWNERSHIP_TYPE[ownershipType]}</Badge>
+                <span className="text-xs text-muted-foreground ml-2">(không đổi được)</span>
+              </div>
             </div>
             <div className="space-y-2"><Label>Trạng thái</Label>
               <Select value={String(status)} onValueChange={(v) => setStatus(Number(v) as AssetStatusCode)}>
