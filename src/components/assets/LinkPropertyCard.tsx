@@ -44,7 +44,7 @@ export function LinkPropertyCard({
   const [propertyId, setPropertyId] = useState("");
 
   const linkMut = useMutation({
-    mutationFn: (pid: string) => assetsApi.linkProperty(assetId, pid),
+    mutationFn: (pid: number) => assetsApi.linkProperty(assetId, pid),
     onSuccess: () => {
       toast.success("Đã liên kết với tin đăng");
       qc.invalidateQueries({ queryKey: ["asset", assetId] });
