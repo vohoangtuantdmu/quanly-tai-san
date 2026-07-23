@@ -19,6 +19,7 @@ import { AssetMediaTab } from "@/components/media/AssetMediaTab";
 import { AssetUnitsTab } from "@/components/units/AssetUnitsTab";
 import { AssetContractsTab } from "@/components/contracts/AssetContractsTab";
 import { ClientMap } from "@/components/map/ClientMap";
+import { LinkPropertyCard } from "@/components/assets/LinkPropertyCard";
 
 export const Route = createFileRoute("/tai-san/$id")({
   head: () => ({ meta: [{ title: "Chi tiết tài sản — Quản Lý Tài Sản" }] }),
@@ -119,6 +120,7 @@ function AssetDetail() {
               <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.notes || "—"}</p></CardContent>
             </Card>
           </div>
+          <LinkPropertyCard assetId={id} linkedPropertyId={a.linkedPropertyId} />
           {a.location && (
             <Card><CardHeader><CardTitle className="text-base">Vị trí</CardTitle></CardHeader>
               <CardContent>
