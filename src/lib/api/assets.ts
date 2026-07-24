@@ -239,40 +239,40 @@ export const assetsApi = {
     api<AssetDetail>(`/assets/${id}`, { method: "PUT", body }),
   remove: (id: string) => api<void>(`/assets/${id}`, { method: "DELETE" }),
   nearby: (lat: number, lng: number, radiusMeters: number, limit = 50) =>
-    api<AssetNearbyDto[]>(
+    api<NearbyAsset[]>(
       `/assets/nearby${toQuery({ latitude: lat, longitude: lng, radiusMeters, limit })}`,
     ),
 
-  linkProperty: (assetId: string, propertyId: number) =>
-    api<AssetDetailDto>(`/assets/${assetId}/link-property/${propertyId}`, { method: "POST" }),
+  linkProperty: (assetId: string, propertyId: number | string) =>
+    api<AssetDetail>(`/assets/${assetId}/link-property/${propertyId}`, { method: "POST" }),
   unlinkProperty: (assetId: string) =>
-    api<AssetDetailDto>(`/assets/${assetId}/link-property`, { method: "DELETE" }),
+    api<AssetDetail>(`/assets/${assetId}/link-property`, { method: "DELETE" }),
 
   units: {
-    list: (assetId: string) => api<AssetUnitDto[]>(`/assets/${assetId}/units`),
-    create: (assetId: string, body: AssetUnitRequest) =>
-      api<AssetUnitDto>(`/assets/${assetId}/units`, { method: "POST", body }),
-    update: (assetId: string, unitId: string, body: AssetUnitRequest) =>
-      api<AssetUnitDto>(`/assets/${assetId}/units/${unitId}`, { method: "PUT", body }),
+    list: (assetId: string) => api<AssetUnit[]>(`/assets/${assetId}/units`),
+    create: (assetId: string, body: UnitInput) =>
+      api<AssetUnit>(`/assets/${assetId}/units`, { method: "POST", body }),
+    update: (assetId: string, unitId: string, body: UnitInput) =>
+      api<AssetUnit>(`/assets/${assetId}/units/${unitId}`, { method: "PUT", body }),
     remove: (assetId: string, unitId: string) =>
       api<void>(`/assets/${assetId}/units/${unitId}`, { method: "DELETE" }),
   },
 
   media: {
-    list: (assetId: string) => api<AssetMediaDto[]>(`/assets/${assetId}/media`),
+    list: (assetId: string) => api<AssetMediaItem[]>(`/assets/${assetId}/media`),
     upload: (assetId: string, files: File[], caption?: string, takenAt?: string) => {
       const fd = new FormData();
       for (const f of files) fd.append("Files", f);
       if (caption) fd.append("Caption", caption);
       if (takenAt) fd.append("TakenAt", takenAt);
-      return apiForm<AssetMediaDto[]>(`/assets/${assetId}/media`, fd, "POST");
+      return apiForm<AssetMediaItem[]>(`/assets/${assetId}/media`, fd, "POST");
     },
     remove: (assetId: string, mediaId: string) =>
       api<void>(`/assets/${assetId}/media/${mediaId}`, { method: "DELETE" }),
     setThumbnail: (assetId: string, file: File) => {
       const fd = new FormData();
       fd.append("file", file);
-      return apiForm<AssetDetailDto>(`/assets/${assetId}/thumbnail`, fd, "PUT");
+      return apiForm<AssetDetail>(`/assets/${assetId}/thumbnail`, fd, "PUT");
     },
     setThumbnailFromMedia: (assetId: string, mediaId: string) =>
       api<AssetDetail>(`/assets/${assetId}/thumbnail/from-media/${mediaId}`, { method: "PUT" }),

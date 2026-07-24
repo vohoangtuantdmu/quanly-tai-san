@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Hồ sơ cá nhân — Quản Lý Tài Sản" }] }),
@@ -35,14 +37,16 @@ function ProfilePage() {
         /* handled by interceptor */
       }
     })();
-     
   }, []);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingProfile(true);
     try {
-      await api("/account/me", { method: "PUT", body: { name: form.name, bio: form.bio || null, phoneNumber: form.phoneNumber || null } });
+      await api("/account/me", {
+        method: "PUT",
+        body: { name: form.name, bio: form.bio || null, phoneNumber: form.phoneNumber || null },
+      });
       updateUser({ name: form.name });
       toast.success("Đã lưu hồ sơ");
     } catch (err) {
@@ -58,7 +62,10 @@ function ProfilePage() {
     if (pw.next !== pw.confirm) return toast.error("Xác nhận mật khẩu không khớp.");
     setSavingPw(true);
     try {
-      await api("/account/change-password", { method: "POST", body: { currentPassword: pw.current, newPassword: pw.next } });
+      await api("/account/change-password", {
+        method: "POST",
+        body: { currentPassword: pw.current, newPassword: pw.next },
+      });
       setPw({ current: "", next: "", confirm: "" });
       toast.success("Đã đổi mật khẩu");
     } catch (err) {
@@ -91,7 +98,9 @@ function ProfilePage() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Thông tin cá nhân</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Thông tin cá nhân</CardTitle>
+        </CardHeader>
         <CardContent>
           <form onSubmit={saveProfile} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -101,16 +110,29 @@ function ProfilePage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="name">Họ tên</Label>
-                <Input id="name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone">Số điện thoại</Label>
-                <Input id="phone" value={form.phoneNumber} onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value }))} />
+                <Input
+                  id="phone"
+                  value={form.phoneNumber}
+                  onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                />
               </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="bio">Giới thiệu</Label>
-              <Textarea id="bio" value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} rows={3} />
+              <Textarea
+                id="bio"
+                value={form.bio}
+                onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                rows={3}
+              />
             </div>
             <Button type="submit" disabled={savingProfile}>
               {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Lưu thay đổi
@@ -120,21 +142,38 @@ function ProfilePage() {
       </Card>
 
       <Card id="doi-mat-khau">
-        <CardHeader><CardTitle>Đổi mật khẩu</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Đổi mật khẩu</CardTitle>
+        </CardHeader>
         <CardContent>
           <form onSubmit={changePassword} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="pw-cur">Mật khẩu hiện tại</Label>
-              <Input id="pw-cur" type="password" value={pw.current} onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))} />
+              <Input
+                id="pw-cur"
+                type="password"
+                value={pw.current}
+                onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="pw-new">Mật khẩu mới</Label>
-                <Input id="pw-new" type="password" value={pw.next} onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))} />
+                <Input
+                  id="pw-new"
+                  type="password"
+                  value={pw.next}
+                  onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="pw-cfm">Xác nhận</Label>
-                <Input id="pw-cfm" type="password" value={pw.confirm} onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))} />
+                <Input
+                  id="pw-cfm"
+                  type="password"
+                  value={pw.confirm}
+                  onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))}
+                />
               </div>
             </div>
             <Button type="submit" disabled={savingPw}>
@@ -144,18 +183,68 @@ function ProfilePage() {
         </CardContent>
       </Card>
 
+      <NotificationSection />
+
       <Card>
-        <CardHeader><CardTitle>Bảo mật phiên đăng nhập</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Bảo mật phiên đăng nhập</CardTitle>
+        </CardHeader>
         <CardContent>
           <p className="mb-3 text-sm text-muted-foreground">
             Đăng xuất khỏi tất cả các thiết bị và trình duyệt đang mở phiên của bạn.
           </p>
           <Button variant="destructive" onClick={doLogoutAll} disabled={loadingAll}>
-            {loadingAll ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
+            {loadingAll ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="mr-2 h-4 w-4" />
+            )}
             Đăng xuất mọi thiết bị
           </Button>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function NotificationSection() {
+  const { isSupported, isSubscribed, permissionDenied, busy, subscribe, unsubscribe } =
+    usePushNotifications();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Thông báo</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {!isSupported ? (
+          <p className="text-sm text-muted-foreground">
+            Trình duyệt của bạn không hỗ trợ thông báo đẩy.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Nhận thông báo đẩy trên trình duyệt này</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Nhắc lịch đến hạn sẽ hiện thông báo kể cả khi tab đang đóng.
+                </p>
+              </div>
+              <Switch
+                checked={isSubscribed}
+                disabled={busy || (permissionDenied && !isSubscribed)}
+                onCheckedChange={(v) => (v ? subscribe() : unsubscribe())}
+              />
+            </div>
+            {permissionDenied && !isSubscribed && (
+              <p className="text-xs text-warning-foreground bg-warning/10 border border-warning/40 rounded-md px-3 py-2">
+                Bạn đã chặn thông báo cho trang này — vào cài đặt trình duyệt (biểu tượng ổ khoá
+                cạnh thanh địa chỉ) để bật lại quyền thông báo.
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
