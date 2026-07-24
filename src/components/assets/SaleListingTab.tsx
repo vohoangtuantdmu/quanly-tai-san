@@ -50,6 +50,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tag, Pencil, Trash2, Send, CheckCheck, Loader2 } from "lucide-react";
+import { MarketplacePublishCard } from "./MarketplacePublishCard";
 
 export function SaleListingTab({ assetId }: { assetId: string }) {
   const qc = useQueryClient();
@@ -79,15 +80,23 @@ export function SaleListingTab({ assetId }: { assetId: string }) {
   }
 
   const listing = query.data ?? null;
-  if (!listing) return <CreateListingCard assetId={assetId} />;
   return (
-    <ListingDetail
-      assetId={assetId}
-      listing={listing}
-      qcInvalidate={() => {
-        qc.invalidateQueries({ queryKey: ["asset-sale-listing", assetId] });
-      }}
-    />
+    <div className="space-y-4">
+      {/* Quản lý rao bán nội bộ (theo dõi giá, môi giới, đánh dấu đã bán) */}
+      {!listing ? (
+        <CreateListingCard assetId={assetId} />
+      ) : (
+        <ListingDetail
+          assetId={assetId}
+          listing={listing}
+          qcInvalidate={() => {
+            qc.invalidateQueries({ queryKey: ["asset-sale-listing", assetId] });
+          }}
+        />
+      )}
+      {/* Đăng tin công khai lên marketplace (tách biệt với rao bán nội bộ) */}
+      <MarketplacePublishCard assetId={assetId} />
+    </div>
   );
 }
 

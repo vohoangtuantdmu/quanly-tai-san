@@ -14,6 +14,7 @@ import { Route as R403RouteImport } from './routes/403'
 import { Route as ConfirmEmailRouteImport } from './routes/confirm-email'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MyListingsRouteImport } from './routes/my-listings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -28,6 +29,8 @@ import { Route as TaiSanIndexRouteImport } from './routes/tai-san.index'
 import { Route as TaiSanIdRouteImport } from './routes/tai-san.$id'
 import { Route as TaiSanMoiRouteImport } from './routes/tai-san.moi'
 import { Route as ThuChiIndexRouteImport } from './routes/thu-chi.index'
+import { Route as TinDangIndexRouteImport } from './routes/tin-dang.index'
+import { Route as TinDangSlugRouteImport } from './routes/tin-dang.$slug'
 import { Route as TaiSanIdSuaRouteImport } from './routes/tai-san.$id_.sua'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +56,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyListingsRoute = MyListingsRouteImport.update({
+  id: '/my-listings',
+  path: '/my-listings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -125,6 +133,16 @@ const ThuChiIndexRoute = ThuChiIndexRouteImport.update({
   path: '/thu-chi/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TinDangIndexRoute = TinDangIndexRouteImport.update({
+  id: '/tin-dang/',
+  path: '/tin-dang/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TinDangSlugRoute = TinDangSlugRouteImport.update({
+  id: '/tin-dang/$slug',
+  path: '/tin-dang/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TaiSanIdSuaRoute = TaiSanIdSuaRouteImport.update({
   id: '/tai-san/$id_/sua',
   path: '/tai-san/$id/sua',
@@ -137,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/confirm-email': typeof ConfirmEmailRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/my-listings': typeof MyListingsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -145,12 +164,14 @@ export interface FileRoutesByFullPath {
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
+  '/tin-dang/$slug': typeof TinDangSlugRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
   '/nhac-lich/': typeof NhacLichIndexRoute
   '/rao-ban/': typeof RaoBanIndexRoute
   '/tai-san/': typeof TaiSanIndexRoute
   '/thu-chi/': typeof ThuChiIndexRoute
+  '/tin-dang/': typeof TinDangIndexRoute
   '/tai-san/$id/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRoutesByTo {
@@ -159,6 +180,7 @@ export interface FileRoutesByTo {
   '/confirm-email': typeof ConfirmEmailRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/my-listings': typeof MyListingsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -167,12 +189,14 @@ export interface FileRoutesByTo {
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
+  '/tin-dang/$slug': typeof TinDangSlugRoute
   '/doi-tac': typeof DoiTacIndexRoute
   '/hop-dong': typeof HopDongIndexRoute
   '/nhac-lich': typeof NhacLichIndexRoute
   '/rao-ban': typeof RaoBanIndexRoute
   '/tai-san': typeof TaiSanIndexRoute
   '/thu-chi': typeof ThuChiIndexRoute
+  '/tin-dang': typeof TinDangIndexRoute
   '/tai-san/$id/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRoutesById {
@@ -182,6 +206,7 @@ export interface FileRoutesById {
   '/confirm-email': typeof ConfirmEmailRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/my-listings': typeof MyListingsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -190,12 +215,14 @@ export interface FileRoutesById {
   '/hop-dong/moi': typeof HopDongMoiRoute
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
+  '/tin-dang/$slug': typeof TinDangSlugRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
   '/nhac-lich/': typeof NhacLichIndexRoute
   '/rao-ban/': typeof RaoBanIndexRoute
   '/tai-san/': typeof TaiSanIndexRoute
   '/thu-chi/': typeof ThuChiIndexRoute
+  '/tin-dang/': typeof TinDangIndexRoute
   '/tai-san/$id_/sua': typeof TaiSanIdSuaRoute
 }
 export interface FileRouteTypes {
@@ -206,6 +233,7 @@ export interface FileRouteTypes {
     | '/confirm-email'
     | '/forgot-password'
     | '/login'
+    | '/my-listings'
     | '/profile'
     | '/register'
     | '/reset-password'
@@ -214,12 +242,14 @@ export interface FileRouteTypes {
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
+    | '/tin-dang/$slug'
     | '/doi-tac/'
     | '/hop-dong/'
     | '/nhac-lich/'
     | '/rao-ban/'
     | '/tai-san/'
     | '/thu-chi/'
+    | '/tin-dang/'
     | '/tai-san/$id/sua'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -228,6 +258,7 @@ export interface FileRouteTypes {
     | '/confirm-email'
     | '/forgot-password'
     | '/login'
+    | '/my-listings'
     | '/profile'
     | '/register'
     | '/reset-password'
@@ -236,12 +267,14 @@ export interface FileRouteTypes {
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
+    | '/tin-dang/$slug'
     | '/doi-tac'
     | '/hop-dong'
     | '/nhac-lich'
     | '/rao-ban'
     | '/tai-san'
     | '/thu-chi'
+    | '/tin-dang'
     | '/tai-san/$id/sua'
   id:
     | '__root__'
@@ -250,6 +283,7 @@ export interface FileRouteTypes {
     | '/confirm-email'
     | '/forgot-password'
     | '/login'
+    | '/my-listings'
     | '/profile'
     | '/register'
     | '/reset-password'
@@ -258,12 +292,14 @@ export interface FileRouteTypes {
     | '/hop-dong/moi'
     | '/tai-san/$id'
     | '/tai-san/moi'
+    | '/tin-dang/$slug'
     | '/doi-tac/'
     | '/hop-dong/'
     | '/nhac-lich/'
     | '/rao-ban/'
     | '/tai-san/'
     | '/thu-chi/'
+    | '/tin-dang/'
     | '/tai-san/$id_/sua'
   fileRoutesById: FileRoutesById
 }
@@ -273,6 +309,7 @@ export interface RootRouteChildren {
   ConfirmEmailRoute: typeof ConfirmEmailRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  MyListingsRoute: typeof MyListingsRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -281,12 +318,14 @@ export interface RootRouteChildren {
   HopDongMoiRoute: typeof HopDongMoiRoute
   TaiSanIdRoute: typeof TaiSanIdRoute
   TaiSanMoiRoute: typeof TaiSanMoiRoute
+  TinDangSlugRoute: typeof TinDangSlugRoute
   DoiTacIndexRoute: typeof DoiTacIndexRoute
   HopDongIndexRoute: typeof HopDongIndexRoute
   NhacLichIndexRoute: typeof NhacLichIndexRoute
   RaoBanIndexRoute: typeof RaoBanIndexRoute
   TaiSanIndexRoute: typeof TaiSanIndexRoute
   ThuChiIndexRoute: typeof ThuChiIndexRoute
+  TinDangIndexRoute: typeof TinDangIndexRoute
   TaiSanIdSuaRoute: typeof TaiSanIdSuaRoute
 }
 
@@ -325,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-listings': {
+      id: '/my-listings'
+      path: '/my-listings'
+      fullPath: '/my-listings'
+      preLoaderRoute: typeof MyListingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -425,6 +471,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThuChiIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tin-dang/': {
+      id: '/tin-dang/'
+      path: '/tin-dang'
+      fullPath: '/tin-dang/'
+      preLoaderRoute: typeof TinDangIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tin-dang/$slug': {
+      id: '/tin-dang/$slug'
+      path: '/tin-dang/$slug'
+      fullPath: '/tin-dang/$slug'
+      preLoaderRoute: typeof TinDangSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tai-san/$id_/sua': {
       id: '/tai-san/$id_/sua'
       path: '/tai-san/$id/sua'
@@ -441,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmEmailRoute: ConfirmEmailRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  MyListingsRoute: MyListingsRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -449,12 +510,14 @@ const rootRouteChildren: RootRouteChildren = {
   HopDongMoiRoute: HopDongMoiRoute,
   TaiSanIdRoute: TaiSanIdRoute,
   TaiSanMoiRoute: TaiSanMoiRoute,
+  TinDangSlugRoute: TinDangSlugRoute,
   DoiTacIndexRoute: DoiTacIndexRoute,
   HopDongIndexRoute: HopDongIndexRoute,
   NhacLichIndexRoute: NhacLichIndexRoute,
   RaoBanIndexRoute: RaoBanIndexRoute,
   TaiSanIndexRoute: TaiSanIndexRoute,
   ThuChiIndexRoute: ThuChiIndexRoute,
+  TinDangIndexRoute: TinDangIndexRoute,
   TaiSanIdSuaRoute: TaiSanIdSuaRoute,
 }
 export const routeTree = rootRouteImport
