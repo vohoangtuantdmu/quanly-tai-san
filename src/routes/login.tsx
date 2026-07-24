@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GoogleLoginSection } from "@/components/auth/GoogleLoginSection";
 
 const searchSchema = z.object({ redirect: z.string().optional() });
 
@@ -68,21 +69,46 @@ function LoginPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={busy} />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={busy}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Mật khẩu</Label>
-              <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={busy} />
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={busy}
+              />
             </div>
-            {error && <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
+            {error && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Đăng nhập
             </Button>
             <div className="flex items-center justify-between text-sm">
-              <Link to="/forgot-password" className="text-primary hover:underline">Quên mật khẩu?</Link>
-              <Link to="/register" className="text-primary hover:underline">Tạo tài khoản</Link>
+              <Link to="/forgot-password" className="text-primary hover:underline">
+                Quên mật khẩu?
+              </Link>
+              <Link to="/register" className="text-primary hover:underline">
+                Tạo tài khoản
+              </Link>
             </div>
           </form>
+          <GoogleLoginSection
+            onSuccess={() => navigate({ to: (redirect as string) || "/", replace: true })}
+          />
         </CardContent>
       </Card>
     </div>

@@ -9,7 +9,13 @@ interface AuthCtx {
   isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (input: { email: string; name: string; password: string; phoneNumber?: string }) => Promise<void>;
+  loginWithExternalProvider: (provider: "Google", token: string) => Promise<void>;
+  register: (input: {
+    email: string;
+    name: string;
+    password: string;
+    phoneNumber?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -73,7 +79,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const r = await api<AuthResponse>("/account/login", { method: "POST", body: { email, password } });
+      const r = await api<AuthResponse>("/account/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      applyAuth(r);
+    },
+    [applyAuth],
+  );
+
+  // Đăng nhập qua provider ngoài (Google) — dùng chung applyAuth với login thường
+  const loginWithExternalProvider = useCallback(
+    async (provider: "Google", token: string) => {
+      const r = await api<AuthResponse>("/account/external-login", {
+        method: "POST",
+        body: { provider, token },
+      });
       applyAuth(r);
     },
     [applyAuth],
@@ -91,7 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cur = loadAuth();
     try {
       if (cur?.refreshToken) {
-        await api("/account/logout", { method: "POST", body: { refreshToken: cur.refreshToken }, skipAuth: true });
+        await api("/account/logout", {
+          method: "POST",
+          body: { refreshToken: cur.refreshToken },
+          skipAuth: true,
+        });
       }
     } catch {
       /* ignore */
@@ -120,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: !!user?.roles?.includes("Admin"),
     isLoading,
     login,
+    loginWithExternalProvider,
     register,
     logout,
     logoutAll,
