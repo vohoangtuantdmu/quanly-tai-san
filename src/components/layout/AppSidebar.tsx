@@ -1,10 +1,26 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Building2, FileText, Users, Wallet, Bell, Tag, Building, ShieldCheck,
+  LayoutDashboard,
+  Building2,
+  FileText,
+  Users,
+  Wallet,
+  Bell,
+  Tag,
+  Building,
+  ShieldCheck,
+  Megaphone,
 } from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth/AuthContext";
 
@@ -16,12 +32,13 @@ const items = [
   { title: "Sổ thu chi", url: "/thu-chi", icon: Wallet },
   { title: "Nhắc lịch", url: "/nhac-lich", icon: Bell },
   { title: "Rao bán", url: "/rao-ban", icon: Tag },
+  { title: "Tin đăng của tôi", url: "/my-listings", icon: Megaphone },
 ];
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const { isAdmin } = useAuth();
-  const isActive = (u: string) => u === "/" ? pathname === "/" : pathname.startsWith(u);
+  const isActive = (u: string) => (u === "/" ? pathname === "/" : pathname.startsWith(u));
 
   return (
     <Sidebar collapsible="icon">

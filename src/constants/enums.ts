@@ -205,6 +205,26 @@ export const SALE_LISTING_STATUS_CLASS: Record<SaleListingStatusCode, string> = 
   4: "bg-muted text-muted-foreground border-border",
 };
 
+// ---- Marketplace: tin đăng công khai ----
+
+export const LISTING_TYPE = { 1: "Bán", 2: "Cho thuê" } as const;
+export type ListingTypeCode = keyof typeof LISTING_TYPE;
+
+export const PROPERTY_STATUS = {
+  1: "Chờ duyệt",
+  2: "Đã duyệt",
+  3: "Bị từ chối",
+  4: "Đã bán",
+} as const;
+export type PropertyStatusCode = keyof typeof PROPERTY_STATUS;
+
+export const PROPERTY_STATUS_CLASS: Record<PropertyStatusCode, string> = {
+  1: "bg-muted text-muted-foreground border-border",
+  2: "bg-success/15 text-success border-success/30",
+  3: "bg-destructive/15 text-destructive border-destructive/30",
+  4: "bg-secondary text-secondary-foreground border-border",
+};
+
 // Helper: chuyển object enum thành mảng { value, label } cho <Select>
 export function enumOptions<T extends Record<number, string>>(
   e: T,
