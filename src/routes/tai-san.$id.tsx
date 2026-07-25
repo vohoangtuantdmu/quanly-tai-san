@@ -46,17 +46,21 @@ import { AssetContractsTab } from "@/components/contracts/AssetContractsTab";
 import { ClientMap } from "@/components/map/ClientMap";
 
 export const Route = createFileRoute("/tai-san/$id")({
+  // ?tab=sale để mở thẳng tab Rao bán (dùng bởi link "Xem chi tiết" ở trang /rao-ban)
+  validateSearch: (s: Record<string, unknown>): { tab?: string } =>
+    typeof s.tab === "string" ? { tab: s.tab } : {},
   head: () => ({ meta: [{ title: "Chi tiết tài sản — Quản Lý Tài Sản" }] }),
   component: AssetDetail,
 });
 
 function AssetDetail() {
   const { id } = Route.useParams();
+  const { tab: tabParam } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [delOpen, setDelOpen] = useState(false);
   const [delError, setDelError] = useState<string | null>(null);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState(tabParam ?? "overview");
 
   const query = useQuery({
     queryKey: ["asset", id],

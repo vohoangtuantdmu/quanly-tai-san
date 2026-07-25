@@ -49,7 +49,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tag, Pencil, Trash2, Send, CheckCheck, Loader2 } from "lucide-react";
+import { Tag, Pencil, Trash2, Send, CheckCheck, Loader2, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { MarketplacePublishCard } from "./MarketplacePublishCard";
 
 export function SaleListingTab({ assetId }: { assetId: string }) {
@@ -82,20 +83,37 @@ export function SaleListingTab({ assetId }: { assetId: string }) {
   const listing = query.data ?? null;
   return (
     <div className="space-y-4">
-      {/* Quản lý rao bán nội bộ (theo dõi giá, môi giới, đánh dấu đã bán) */}
-      {!listing ? (
-        <CreateListingCard assetId={assetId} />
-      ) : (
-        <ListingDetail
-          assetId={assetId}
-          listing={listing}
-          qcInvalidate={() => {
-            qc.invalidateQueries({ queryKey: ["asset-sale-listing", assetId] });
-          }}
-        />
-      )}
-      {/* Đăng tin công khai lên marketplace (tách biệt với rao bán nội bộ) */}
+      {/* Hành động chính: đăng tin công khai lên marketplace */}
       <MarketplacePublishCard assetId={assetId} />
+
+      {/* Sổ nội bộ theo dõi gửi môi giới — thu gọn mặc định nếu chưa có dữ liệu */}
+      <Collapsible defaultOpen={!!listing} className="rounded-lg border bg-card">
+        <CollapsibleTrigger className="group w-full flex items-center justify-between gap-3 p-4 text-left">
+          <div>
+            <div className="text-base font-semibold flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Theo dõi gửi môi giới (chỉ nội bộ)
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Không hiển thị công khai — chỉ bạn xem được.
+            </p>
+          </div>
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="p-4 pt-0 space-y-4">
+          {!listing ? (
+            <CreateListingCard assetId={assetId} />
+          ) : (
+            <ListingDetail
+              assetId={assetId}
+              listing={listing}
+              qcInvalidate={() => {
+                qc.invalidateQueries({ queryKey: ["asset-sale-listing", assetId] });
+              }}
+            />
+          )}
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
@@ -114,51 +132,47 @@ function CreateListingCard({ assetId }: { assetId: string }) {
         agreementNotes: agreementNotes.trim() || null,
       }),
     onSuccess: () => {
-      toast.success("Đã đăng rao bán tài sản");
+      toast.success("Đã bắt đầu theo dõi gửi môi giới");
       qc.invalidateQueries({ queryKey: ["asset-sale-listing", assetId] });
       qc.invalidateQueries({ queryKey: ["asset", assetId] });
       qc.invalidateQueries({ queryKey: ["assets"] });
+      qc.invalidateQueries({ queryKey: ["sale-listings"] });
     },
-    onError: (err) => toast.error(getErrorMessage(err, "Không đăng được tin rao bán")),
+    onError: (err) => toast.error(getErrorMessage(err, "Không lưu được")),
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Tag className="h-4 w-4" />
-          Đăng rao bán tài sản
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 max-w-md">
-        <div className="space-y-2">
-          <Label>Giá rao (VNĐ) *</Label>
-          <CurrencyInput value={askingPrice} onChange={setAskingPrice} />
-        </div>
-        <div className="space-y-2">
-          <Label>Ghi chú thoả thuận</Label>
-          <Textarea
-            rows={3}
-            value={agreementNotes}
-            onChange={(e) => setAgreementNotes(e.target.value)}
-            placeholder="Điều kiện bán, hoa hồng môi giới..."
-          />
-        </div>
-        <Button
-          onClick={() => {
-            if (!askingPrice || askingPrice <= 0) {
-              toast.error("Vui lòng nhập giá rao hợp lệ");
-              return;
-            }
-            create.mutate();
-          }}
-          disabled={create.isPending}
-        >
-          {create.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-          {create.isPending ? "Đang đăng..." : "Đăng rao bán"}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="space-y-3 max-w-md">
+      <p className="text-sm text-muted-foreground">
+        Ghi lại giá bạn đã báo và bắt đầu theo dõi việc gửi tài sản cho các môi giới quen.
+      </p>
+      <div className="space-y-2">
+        <Label>Giá đã báo (VNĐ) *</Label>
+        <CurrencyInput value={askingPrice} onChange={setAskingPrice} />
+      </div>
+      <div className="space-y-2">
+        <Label>Ghi chú thoả thuận</Label>
+        <Textarea
+          rows={3}
+          value={agreementNotes}
+          onChange={(e) => setAgreementNotes(e.target.value)}
+          placeholder="Điều kiện bán, hoa hồng môi giới..."
+        />
+      </div>
+      <Button
+        onClick={() => {
+          if (!askingPrice || askingPrice <= 0) {
+            toast.error("Vui lòng nhập giá hợp lệ");
+            return;
+          }
+          create.mutate();
+        }}
+        disabled={create.isPending}
+      >
+        {create.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+        {create.isPending ? "Đang lưu..." : "Bắt đầu theo dõi"}
+      </Button>
+    </div>
   );
 }
 
@@ -198,6 +212,7 @@ function ListingDetail({
       // asset.status cũng đổi sang "Đã bán" → header trang chi tiết + danh sách phải cập nhật
       qc.invalidateQueries({ queryKey: ["asset", assetId] });
       qc.invalidateQueries({ queryKey: ["assets"] });
+      qc.invalidateQueries({ queryKey: ["sale-listings"] });
     },
     onError: (err) => toast.error(getErrorMessage(err, "Không đánh dấu được đã bán")),
   });
