@@ -243,11 +243,6 @@ export const assetsApi = {
       `/assets/nearby${toQuery({ latitude: lat, longitude: lng, radiusMeters, limit })}`,
     ),
 
-  linkProperty: (assetId: string, propertyId: number | string) =>
-    api<AssetDetail>(`/assets/${assetId}/link-property/${propertyId}`, { method: "POST" }),
-  unlinkProperty: (assetId: string) =>
-    api<AssetDetail>(`/assets/${assetId}/link-property`, { method: "DELETE" }),
-
   units: {
     list: (assetId: string) => api<AssetUnit[]>(`/assets/${assetId}/units`),
     create: (assetId: string, body: UnitInput) =>

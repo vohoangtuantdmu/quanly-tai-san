@@ -33,6 +33,8 @@ import {
   Wallet,
   ImageIcon,
   RefreshCw,
+  Link2,
+  ArrowRight,
 } from "lucide-react";
 import { AssetMediaTab } from "@/components/media/AssetMediaTab";
 import { EquipmentTab } from "@/components/assets/EquipmentTab";
@@ -42,7 +44,6 @@ import { SaleListingTab } from "@/components/assets/SaleListingTab";
 import { AssetUnitsTab } from "@/components/units/AssetUnitsTab";
 import { AssetContractsTab } from "@/components/contracts/AssetContractsTab";
 import { ClientMap } from "@/components/map/ClientMap";
-import { LinkPropertyCard } from "@/components/assets/LinkPropertyCard";
 
 export const Route = createFileRoute("/tai-san/$id")({
   head: () => ({ meta: [{ title: "Chi tiết tài sản — Quản Lý Tài Sản" }] }),
@@ -55,6 +56,7 @@ function AssetDetail() {
   const qc = useQueryClient();
   const [delOpen, setDelOpen] = useState(false);
   const [delError, setDelError] = useState<string | null>(null);
+  const [tab, setTab] = useState("overview");
 
   const query = useQuery({
     queryKey: ["asset", id],
@@ -174,7 +176,7 @@ function AssetDetail() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
           <TabsTrigger value="units">Tầng/Phòng ({a.unitCount})</TabsTrigger>
@@ -218,7 +220,23 @@ function AssetDetail() {
               </CardContent>
             </Card>
           </div>
-          <LinkPropertyCard assetId={id} linkedPropertyId={a.linkedPropertyId} />
+          {/* Trạng thái liên kết tin đăng — chỉ đọc; thao tác nằm ở tab Rao bán */}
+          {a.linkedPropertyId !== null && (
+            <div className="flex items-center gap-2 text-sm">
+              <Link2 className="h-4 w-4 text-muted-foreground" />
+              <span>Đã liên kết với tin đăng công khai</span>
+              {a.ownershipType === 1 && (
+                <button
+                  type="button"
+                  className="text-primary hover:underline inline-flex items-center gap-0.5"
+                  onClick={() => setTab("sale")}
+                >
+                  Xem chi tiết
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
           {a.location && (
             <Card>
               <CardHeader>

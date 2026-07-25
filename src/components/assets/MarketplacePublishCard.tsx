@@ -13,6 +13,8 @@ import { ApiError } from "@/lib/auth/types";
 import {
   LISTING_TYPE,
   PAYMENT_CYCLE,
+  PROPERTY_STATUS,
+  PROPERTY_STATUS_CLASS,
   enumOptions,
   type ListingTypeCode,
   type PaymentCycleCode,
@@ -40,7 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Globe, Check, Loader2, ImageIcon, ExternalLink } from "lucide-react";
+import { Globe, Check, Loader2, ImageIcon, ExternalLink, Eye } from "lucide-react";
 
 /**
  * Card "Đăng tin công khai lên Marketplace" trong tab Rao bán.
@@ -67,16 +69,7 @@ export function MarketplacePublishCard({ assetId }: { assetId: string }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {linked ? (
-          <div className="text-sm text-muted-foreground">
-            Tài sản này đã có tin đăng trên marketplace.{" "}
-            <Link
-              to="/my-listings"
-              className="text-primary hover:underline inline-flex items-center gap-1"
-            >
-              Xem ở "Tin đăng của tôi"
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+          <LinkedListingStatus assetId={assetId} />
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
@@ -93,6 +86,45 @@ export function MarketplacePublishCard({ assetId }: { assetId: string }) {
 
       <PublishDialog key={String(open)} assetId={assetId} open={open} onOpenChange={setOpen} />
     </Card>
+  );
+}
+
+/** Trạng thái tin đăng công khai hiện tại của tài sản (khi đã liên kết). */
+function LinkedListingStatus({ assetId }: { assetId: string }) {
+  const query = useQuery({
+    queryKey: ["my-listings"],
+    queryFn: () => propertiesApi.myListings(),
+    retry: 1,
+  });
+
+  const listing = (query.data ?? []).find((l) => l.linkedAssetId === assetId);
+
+  return (
+    <div className="space-y-3">
+      {query.isLoading ? (
+        <p className="text-sm text-muted-foreground">Đang tải trạng thái tin đăng...</p>
+      ) : listing ? (
+        <div className="flex items-center gap-3 flex-wrap">
+          <Badge variant="outline" className={PROPERTY_STATUS_CLASS[listing.status]}>
+            {PROPERTY_STATUS[listing.status]}
+          </Badge>
+          <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+            <Eye className="h-3.5 w-3.5" />
+            {listing.viewCount} lượt xem
+          </span>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Tài sản này đã có tin đăng trên marketplace.
+        </p>
+      )}
+      <Button variant="outline" asChild>
+        <Link to="/my-listings">
+          Xem trong Tin đăng của tôi
+          <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+        </Link>
+      </Button>
+    </div>
   );
 }
 
