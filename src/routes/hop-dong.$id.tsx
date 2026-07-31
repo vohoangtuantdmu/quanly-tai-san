@@ -15,7 +15,7 @@ import {
   PAYMENT_CYCLE,
   TAX_RESPONSIBILITY,
 } from "@/constants/enums";
-import { formatDate, formatVND } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import { getErrorMessage } from "@/lib/api/errors";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,7 +161,7 @@ function ContractDetailPage() {
           </CardHeader>
           <CardContent className="text-sm space-y-1">
             <div>
-              Tiền thuê: <b>{formatVND(c.rentAmount)}</b> /{" "}
+              Tiền thuê: <b>{formatCurrency(c.rentAmount)}</b> /{" "}
               {PAYMENT_CYCLE[c.paymentCycle].toLowerCase()}
             </div>
             <div>
@@ -169,7 +169,7 @@ function ContractDetailPage() {
             </div>
             {c.depositAmount != null && (
               <div>
-                Tiền cọc: <b>{formatVND(c.depositAmount)}</b>
+                Tiền cọc: <b>{formatCurrency(c.depositAmount)}</b>
               </div>
             )}
             {c.nextRentIncreaseDate && (

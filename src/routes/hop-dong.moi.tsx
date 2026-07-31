@@ -19,7 +19,7 @@ import {
   type PaymentCycleCode,
   type TaxResponsibilityCode,
 } from "@/constants/enums";
-import { formatVND } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -506,10 +506,12 @@ function NewContract() {
                   }
                 />
                 <Row label="Kỳ hạn" value={`${startDate} → ${endDate}`} />
-                <Row label="Tiền thuê" value={rentAmount ? formatVND(rentAmount) : "—"} />
+                <Row label="Tiền thuê" value={rentAmount ? formatCurrency(rentAmount) : "—"} />
                 <Row label="Chu kỳ" value={PAYMENT_CYCLE[paymentCycle]} />
                 <Row label="Ngày trả" value={`Ngày ${paymentDueDay} mỗi kỳ`} />
-                {depositAmount != null && <Row label="Tiền cọc" value={formatVND(depositAmount)} />}
+                {depositAmount != null && (
+                  <Row label="Tiền cọc" value={formatCurrency(depositAmount)} />
+                )}
                 <Row label="Ai chịu thuế" value={TAX_RESPONSIBILITY[taxResp]} />
                 <Row label="Kích hoạt ngay" value={activate ? "Có" : "Không"} />
               </div>

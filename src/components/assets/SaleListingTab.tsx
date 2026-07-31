@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { assetsApi, type SaleListingDto, type SaleListingUpdateInput } from "@/lib/api/assets";
 import { contactsApi } from "@/lib/api/contacts";
 import { getErrorMessage } from "@/lib/api/errors";
-import { formatDate, formatVND } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import {
   SALE_LISTING_STATUS,
   SALE_LISTING_STATUS_CLASS,
@@ -225,7 +225,7 @@ function ListingDetail({
         <CardContent className="p-5 flex items-start justify-between gap-3 flex-wrap">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-2xl font-semibold">{formatVND(listing.askingPrice)}</span>
+              <span className="text-2xl font-semibold">{formatCurrency(listing.askingPrice)}</span>
               <Badge variant="outline" className={SALE_LISTING_STATUS_CLASS[listing.status]}>
                 {SALE_LISTING_STATUS[listing.status]}
               </Badge>
