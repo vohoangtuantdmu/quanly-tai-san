@@ -12,6 +12,7 @@ import { getErrorMessage } from "@/lib/api/errors";
 import { ApiError } from "@/lib/auth/types";
 import {
   LISTING_TYPE,
+  ASSET_TYPE,
   PAYMENT_CYCLE,
   PROPERTY_STATUS,
   PROPERTY_STATUS_CLASS,
@@ -19,6 +20,13 @@ import {
   type ListingTypeCode,
   type PaymentCycleCode,
 } from "@/constants/enums";
+import {
+  AssetSpecsFields,
+  specsFromApi,
+  specsToApi,
+  hasAnySpec,
+  type SpecsState,
+} from "./AssetSpecsFields";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,18 +158,30 @@ function PublishDialog({
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState<number | null>(null);
   const [prefilled, setPrefilled] = useState(false);
-  // Bước 3
-  const [floors, setFloors] = useState("");
-  const [bedrooms, setBedrooms] = useState("");
-  const [bathrooms, setBathrooms] = useState("");
-  const [frontage, setFrontage] = useState("");
-  const [houseDirection, setHouseDirection] = useState("");
-  const [legalStatus, setLegalStatus] = useState("");
-  const [furnitureState, setFurnitureState] = useState("");
-  const [propertyType, setPropertyType] = useState("");
+  // Bước 3 — thông số: mặc định lấy từ Asset; chỉ gửi override khi user chỉnh
+  const [specs, setSpecs] = useState<SpecsState | null>(null);
+  const [specsOverride, setSpecsOverride] = useState(false); // user đã bấm "Chỉnh sửa cho tin đăng này"
+  const [frontage, setFrontage] = useState(""); // Asset không lưu mặt tiền → luôn hỏi riêng
   // Bước 4
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [conflict, setConflict] = useState<string | null>(null);
+
+  // Đọc asset để lấy các trường đã có sẵn (loại hình, số tầng, phòng ngủ, phòng tắm, hướng nhà, pháp lý, nội thất)
+  const assetQ = useQuery({
+    queryKey: ["asset", assetId],
+    queryFn: () => assetsApi.detail(assetId),
+    enabled: open,
+    retry: 1,
+  });
+  const asset = assetQ.data;
+
+  // Khởi tạo specs state từ asset một lần khi có data
+  if (open && asset && specs === null) {
+    const initial = specsFromApi(asset);
+    setSpecs(initial);
+    // Nếu thiếu bất kỳ trường nào → mở form nhập luôn
+    if (!hasAllSpecs(asset)) setSpecsOverride(true);
+  }
 
   // Prefill giá từ rao bán nội bộ (404 = chưa có → bỏ qua im lặng)
   const saleQ = useQuery({
@@ -187,20 +207,29 @@ function PublishDialog({
 
   const create = useMutation({
     mutationFn: () => {
+      // Chỉ gửi 6 trường mô tả khi user thật sự chỉnh sửa (progressive disclosure).
+      // Nếu không chỉnh, gửi null → backend tự lấy từ Asset.
+      const specsPayload =
+        specsOverride && specs
+          ? specsToApi(specs)
+          : {
+              floors: null,
+              bedrooms: null,
+              bathrooms: null,
+              houseDirection: null,
+              legalStatus: null,
+              furnitureState: null,
+            };
       const body: CreatePropertyListingInput = {
         type,
         title: title.trim(),
         description: description.trim(),
         price: price ?? 0,
         rentPaymentCycle: type === 2 ? rentPaymentCycle : null,
-        floors: num(floors),
-        bedrooms: num(bedrooms),
-        bathrooms: num(bathrooms),
+        ...specsPayload,
         frontage: num(frontage),
-        houseDirection: houseDirection.trim() || null,
-        legalStatus: legalStatus.trim() || null,
-        furnitureState: furnitureState.trim() || null,
-        propertyType: propertyType.trim() || null,
+        // Loại hình BĐS luôn lấy từ Asset (không hỏi user nữa)
+        propertyType: null,
         selectedAssetMediaIds: selectedIds,
       };
       return propertiesApi.createFromAsset(assetId, body);
@@ -333,77 +362,54 @@ function PublishDialog({
             </div>
           )}
 
-          {/* Bước 3 — thông số */}
-          {step === 2 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Số tầng</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={floors}
-                  onChange={(e) => setFloors(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
+          {/* Bước 3 — thông số: preview từ Asset + mặt tiền + progressive disclosure */}
+          {step === 2 && asset && (
+            <div className="space-y-4">
+              <SpecsPreview asset={asset} />
+              <div className="space-y-2 max-w-xs">
                 <Label>Mặt tiền (m)</Label>
                 <Input
                   type="number"
                   min={0}
                   value={frontage}
                   onChange={(e) => setFrontage(e.target.value)}
+                  placeholder="Tài sản chưa lưu — nhập cho tin đăng"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Phòng ngủ</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={bedrooms}
-                  onChange={(e) => setBedrooms(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Phòng tắm</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={bathrooms}
-                  onChange={(e) => setBathrooms(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Hướng nhà</Label>
-                <Input
-                  value={houseDirection}
-                  onChange={(e) => setHouseDirection(e.target.value)}
-                  placeholder="VD: Đông Nam"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Loại hình BĐS</Label>
-                <Input
-                  value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value)}
-                  placeholder="VD: Nhà phố"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Tình trạng pháp lý</Label>
-                <Input
-                  value={legalStatus}
-                  onChange={(e) => setLegalStatus(e.target.value)}
-                  placeholder="VD: Sổ hồng riêng"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Nội thất</Label>
-                <Input
-                  value={furnitureState}
-                  onChange={(e) => setFurnitureState(e.target.value)}
-                  placeholder="VD: Đầy đủ nội thất"
-                />
-              </div>
+              {!hasAllSpecs(asset) && !specsOverride && (
+                <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                  Một số thông tin chưa có — vui lòng bổ sung để tin đăng đầy đủ hơn.
+                </div>
+              )}
+              {!specsOverride ? (
+                <Button variant="outline" size="sm" onClick={() => setSpecsOverride(true)}>
+                  Chỉnh sửa cho tin đăng này →
+                </Button>
+              ) : (
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">Chỉnh sửa thông số cho tin đăng này</div>
+                    {hasAllSpecs(asset) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSpecsOverride(false);
+                          setSpecs(specsFromApi(asset));
+                        }}
+                      >
+                        Dùng lại từ tài sản
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Chỉ áp dụng cho tin này, không sửa dữ liệu tài sản.
+                  </p>
+                  {specs && (
+                    <AssetSpecsFields value={specs} onChange={setSpecs} collapsible={false} />
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -553,4 +559,83 @@ function ConfirmStep({
 function toastFalse(msg: string): false {
   toast.error(msg);
   return false;
+}
+
+/** Kiểm tra Asset đã đủ 6 trường mô tả chi tiết chưa. */
+function hasAllSpecs(
+  a: {
+    floors: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    houseDirection: string | null;
+    legalStatus: string | null;
+    furnitureState: string | null;
+  } | null,
+): boolean {
+  if (!a) return false;
+  return (
+    a.floors != null &&
+    a.bedrooms != null &&
+    a.bathrooms != null &&
+    !!a.houseDirection &&
+    !!a.legalStatus &&
+    !!a.furnitureState
+  );
+}
+
+/** Card preview 6 trường + loại hình lấy từ Asset (read-only). */
+function SpecsPreview({
+  asset,
+}: {
+  asset: {
+    type: number;
+    floors: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    houseDirection: string | null;
+    legalStatus: string | null;
+    furnitureState: string | null;
+  };
+}) {
+  const fmt = (v: number | string | null, unit = "") =>
+    v == null || v === "" ? "—" : `${v}${unit}`;
+  return (
+    <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+      <div className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+        📋 Thông số lấy từ tài sản
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1.5 text-sm">
+        <div>
+          <span className="text-muted-foreground">Loại hình:</span>{" "}
+          <span className="font-medium">
+            {ASSET_TYPE[asset.type as keyof typeof ASSET_TYPE] ?? "—"}
+          </span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Số tầng:</span>{" "}
+          <span className="font-medium">{fmt(asset.floors)}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Phòng ngủ:</span>{" "}
+          <span className="font-medium">{fmt(asset.bedrooms)}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Phòng tắm:</span>{" "}
+          <span className="font-medium">{fmt(asset.bathrooms)}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Hướng nhà:</span>{" "}
+          <span className="font-medium">{fmt(asset.houseDirection)}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Pháp lý:</span>{" "}
+          <span className="font-medium">{fmt(asset.legalStatus)}</span>
+        </div>
+        <div className="col-span-2 md:col-span-3">
+          <span className="text-muted-foreground">Nội thất:</span>{" "}
+          <span className="font-medium">{fmt(asset.furnitureState)}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
