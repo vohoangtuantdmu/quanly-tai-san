@@ -63,9 +63,26 @@ export interface AssetDetail {
   activeContractCount: number;
   createdAt: string;
   updatedAt: string;
+  // Thông tin mô tả chi tiết — điền một lần, tái dùng khi đăng tin công khai
+  floors: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  houseDirection: string | null;
+  legalStatus: string | null;
+  furnitureState: string | null;
 }
 
-export interface CreateAssetInput {
+/** 6 trường mô tả chi tiết, dùng chung giữa form tạo/sửa tài sản và form đăng tin. */
+export interface AssetDetailSpecs {
+  floors?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  houseDirection?: string | null;
+  legalStatus?: string | null;
+  furnitureState?: string | null;
+}
+
+export interface CreateAssetInput extends AssetDetailSpecs {
   name: string;
   type: AssetTypeCode;
   ownershipType: OwnershipTypeCode;

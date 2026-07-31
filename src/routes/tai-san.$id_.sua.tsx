@@ -28,6 +28,14 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
+import { VietnamAddressPicker } from "@/components/assets/VietnamAddressPicker";
+import {
+  AssetSpecsFields,
+  emptySpecs,
+  specsFromApi,
+  specsToApi,
+  type SpecsState,
+} from "@/components/assets/AssetSpecsFields";
 
 export const Route = createFileRoute("/tai-san/$id_/sua")({
   head: () => ({ meta: [{ title: "Sửa tài sản — Quản Lý Tài Sản" }] }),
@@ -64,6 +72,7 @@ function EditAsset() {
   const [currentValue, setCurrentValue] = useState<number | null>(null);
   const [acquisitionDate, setAcquisitionDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [specs, setSpecs] = useState<SpecsState>(emptySpecs);
 
   useEffect(() => {
     const a = query.data;
@@ -80,6 +89,7 @@ function EditAsset() {
     setCurrentValue(a.currentValue);
     setAcquisitionDate(a.acquisitionDate ? a.acquisitionDate.slice(0, 10) : "");
     setNotes(a.notes ?? "");
+    setSpecs(specsFromApi(a));
   }, [query.data]);
 
   const mutation = useMutation({
@@ -130,6 +140,7 @@ function EditAsset() {
       currentValue: ownershipType === 2 ? null : currentValue,
       acquisitionDate: toIsoUtcOrNull(acquisitionDate),
       notes: notes.trim() || null,
+      ...specsToApi(specs),
     });
   };
 
@@ -218,19 +229,17 @@ function EditAsset() {
         <CardHeader>
           <CardTitle className="text-lg">Địa chỉ</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Thành phố *</Label>
-            <Input value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Quận/Huyện *</Label>
-            <Input value={district} onChange={(e) => setDistrict(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Phường/Xã *</Label>
-            <Input value={ward} onChange={(e) => setWard(e.target.value)} />
-          </div>
+        <CardContent className="space-y-3">
+          <VietnamAddressPicker
+            city={city}
+            district={district}
+            ward={ward}
+            onChange={(v) => {
+              setCity(v.city);
+              setDistrict(v.district);
+              setWard(v.ward);
+            }}
+          />
           <div className="space-y-2">
             <Label>Số nhà, đường</Label>
             <Input value={detail} onChange={(e) => setDetail(e.target.value)} />
@@ -275,6 +284,7 @@ function EditAsset() {
           </div>
         </CardContent>
       </Card>
+      <AssetSpecsFields value={specs} onChange={setSpecs} />
       <div className="flex justify-end gap-2">
         <Button variant="outline" asChild>
           <Link to="/tai-san/$id" params={{ id }}>
