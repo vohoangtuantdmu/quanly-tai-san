@@ -225,6 +225,32 @@ export const PROPERTY_STATUS_CLASS: Record<PropertyStatusCode, string> = {
   4: "bg-secondary text-secondary-foreground border-border",
 };
 
+// ---- Thông tin mô tả chi tiết của tài sản (dùng lại khi đăng tin công khai) ----
+
+export const HOUSE_DIRECTIONS = [
+  "Đông",
+  "Tây",
+  "Nam",
+  "Bắc",
+  "Đông Bắc",
+  "Đông Nam",
+  "Tây Bắc",
+  "Tây Nam",
+] as const;
+
+// "Khác" → hiện thêm ô nhập tay
+export const LEGAL_STATUS_OPTIONS = [
+  "Sổ hồng riêng",
+  "Sổ hồng chung",
+  "Đang chờ sổ",
+  "Hợp đồng mua bán",
+  "Khác",
+] as const;
+
+export const FURNITURE_STATE_OPTIONS = ["Đầy đủ", "Cơ bản", "Không nội thất", "Khác"] as const;
+
+export const OTHER_OPTION = "Khác";
+
 // Helper: chuyển object enum thành mảng { value, label } cho <Select>
 export function enumOptions<T extends Record<number, string>>(
   e: T,
