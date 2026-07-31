@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2, XCircle, Image as ImageIcon } from "lucide-react
 import { adminApi, type AdminPendingProperty } from "@/lib/api/admin";
 import { getErrorMessage } from "@/lib/api/errors";
 import { ApiError } from "@/lib/auth/types";
-import { formatDate, formatVND } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import { LISTING_TYPE, PROPERTY_STATUS, type PropertyStatusCode } from "@/constants/enums";
 import { AdminRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
@@ -132,8 +132,10 @@ function AdminPropertiesPage() {
         {STAT_ORDER.map((s) => (
           <Card key={s}>
             <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground">{PROPERTY_STATUS[s]}</div>
-              <div className={`mt-1 text-2xl font-semibold ${STAT_TONE[s]}`}>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                {PROPERTY_STATUS[s]}
+              </div>
+              <div className={`mt-1 text-3xl font-semibold ${STAT_TONE[s]}`}>
                 {statsQ.isLoading ? "—" : countByStatus(s)}
               </div>
             </CardContent>
@@ -170,7 +172,7 @@ function AdminPropertiesPage() {
                   <div className="min-w-0 space-y-1">
                     <div className="font-medium">{p.title}</div>
                     <div className="text-sm text-primary font-semibold">
-                      {formatVND(p.price)} · {LISTING_TYPE[p.type]}
+                      {formatCurrency(p.price)} · {LISTING_TYPE[p.type]}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {[p.district, p.city].filter(Boolean).join(", ") || "—"}

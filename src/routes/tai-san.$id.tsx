@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { assetsApi } from "@/lib/api/assets";
 import { ASSET_TYPE, OWNERSHIP_TYPE } from "@/constants/enums";
 import { AssetStatusBadgeCode } from "@/components/EnumBadge";
-import { formatVND, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { getErrorMessage } from "@/lib/api/errors";
 import { ApiError } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
@@ -204,7 +204,7 @@ function AssetDetail() {
                 <Row
                   icon={Wallet}
                   label="Giá trị hiện tại"
-                  value={a.currentValue ? formatVND(a.currentValue) : "—"}
+                  value={a.currentValue ? formatCurrency(a.currentValue) : "—"}
                 />
                 <Row
                   icon={Calendar}

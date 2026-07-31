@@ -2,7 +2,7 @@ import { api, toQuery } from "./http";
 import type { PagedResult } from "./assets";
 import type { ListingTypeCode, PaymentCycleCode, PropertyStatusCode } from "@/constants/enums";
 import { PAYMENT_CYCLE } from "@/constants/enums";
-import { formatVND } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 
 // ---- Types ----
 export interface PublicPropertySummaryDto {
@@ -106,9 +106,9 @@ export function formatListingPrice(
 ): string {
   if (type === 2) {
     const suffix = cycle && PAYMENT_CYCLE[cycle] ? CYCLE_SUFFIX[cycle] : "/tháng";
-    return `${formatVND(price)}${suffix}`;
+    return `${formatCurrency(price)}${suffix}`;
   }
-  return formatVND(price);
+  return formatCurrency(price);
 }
 
 // ---- API ----

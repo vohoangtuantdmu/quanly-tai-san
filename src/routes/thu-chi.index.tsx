@@ -7,7 +7,8 @@ import { contractsApi, toIsoUtc } from "@/lib/api/contracts";
 import { cashflowsApi, type CashFlowDto, type CashFlowFilters } from "@/lib/api/cashflows";
 import { reportsApi } from "@/lib/api/reports";
 import { getErrorMessage } from "@/lib/api/errors";
-import { formatVND, formatDate } from "@/lib/format";
+import { formatVND, formatCurrency, formatDate } from "@/lib/format";
+import { MoneyValue } from "@/components/MoneyValue";
 import {
   CASH_FLOW_DIRECTION,
   CASH_FLOW_CATEGORY,
@@ -79,13 +80,21 @@ export const Route = createFileRoute("/thu-chi/")({
   component: CashflowPage,
 });
 
-const PIE_COLORS = [
-  "var(--color-chart-1)",
-  "var(--color-chart-2)",
-  "var(--color-chart-3)",
-  "var(--color-chart-4)",
-  "var(--color-chart-5)",
-];
+// Màu ngữ nghĩa cho biểu đồ tài chính — thu=xanh, chi=đỏ, KHÔNG dùng bảng màu
+// rainbow mặc định của recharts để người xem phân biệt ngay 2 nhóm.
+const INCOME_COLOR = "#16a34a";
+const EXPENSE_COLOR = "#dc2626";
+// Nhiều hạng mục trong cùng 1 pie → tạo dải sắc độ từ màu gốc (đậm → nhạt dần)
+function shadesOf(baseHex: string, count: number): string[] {
+  const r = parseInt(baseHex.slice(1, 3), 16);
+  const g = parseInt(baseHex.slice(3, 5), 16);
+  const b = parseInt(baseHex.slice(5, 7), 16);
+  return Array.from({ length: count }, (_, i) => {
+    const t = count <= 1 ? 0 : (i / (count - 1)) * 0.6; // pha trắng dần tối đa 60%
+    const mix = (c: number) => Math.round(c + (255 - c) * t);
+    return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+  });
+}
 
 const RECEIPT_ACCEPT = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 const RECEIPT_MAX = 10 * 1024 * 1024;
@@ -329,12 +338,9 @@ function LedgerTab() {
                       <TableCell className="text-sm">
                         {CASH_FLOW_CATEGORY[e.category] ?? e.category}
                       </TableCell>
-                      <TableCell
-                        className={`text-right font-medium ${
-                          e.direction === 1 ? "text-success" : "text-destructive"
-                        }`}
-                      >
-                        {e.direction === 1 ? "+" : "−"} {formatVND(e.amount)}
+                      <TableCell className="text-right">
+                        {/* Cột gộp thu/chi → dấu +/- rõ ràng kèm màu qua MoneyValue */}
+                        <MoneyValue amount={e.direction === 1 ? e.amount : -e.amount} showSign />
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-[260px] truncate">
                         {e.description}
@@ -390,7 +396,7 @@ function LedgerTab() {
             <AlertDialogDescription>
               {deleting && (
                 <>
-                  {CASH_FLOW_DIRECTION[deleting.direction]} {formatVND(deleting.amount)} —{" "}
+                  {CASH_FLOW_DIRECTION[deleting.direction]} {formatCurrency(deleting.amount)} —{" "}
                   {CASH_FLOW_CATEGORY[deleting.category]} ({formatDate(deleting.occurredAt)}). Hành
                   động này không thể hoàn tác.
                 </>
@@ -845,7 +851,7 @@ function IncomeTab() {
           <CardHeader>
             <CardTitle className="text-base">Thu nhập theo tháng</CardTitle>
             <div className="text-3xl font-semibold text-success">
-              {formatVND(query.data?.totalIncome ?? 0)}
+              {formatCurrency(query.data?.totalIncome ?? 0)}
             </div>
           </CardHeader>
           <CardContent>
@@ -865,7 +871,7 @@ function IncomeTab() {
                       tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}tr`}
                     />
                     <Tooltip
-                      formatter={(v: number) => formatVND(v)}
+                      formatter={(v: number) => formatCurrency(v)}
                       contentStyle={{
                         background: "var(--color-card)",
                         border: "1px solid var(--color-border)",
@@ -875,7 +881,7 @@ function IncomeTab() {
                     <Bar
                       dataKey="amount"
                       name="Thu nhập"
-                      fill="var(--color-chart-2)"
+                      fill={INCOME_COLOR}
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -894,14 +900,18 @@ function IncomeTab() {
 function BreakdownPie({
   title,
   data,
+  tone,
 }: {
   title: string;
   data: { category: CashFlowCategoryCode; amount: number }[];
+  /** thu → dải xanh, chi → dải đỏ — nhất quán với màu ngữ nghĩa toàn app */
+  tone: "income" | "expense";
 }) {
   const chartData = data.map((d) => ({
     name: CASH_FLOW_CATEGORY[d.category] ?? String(d.category),
     value: d.amount,
   }));
+  const colors = shadesOf(tone === "income" ? INCOME_COLOR : EXPENSE_COLOR, chartData.length);
   return (
     <Card>
       <CardHeader>
@@ -925,12 +935,12 @@ function BreakdownPie({
                   outerRadius={90}
                 >
                   {chartData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    <Cell key={i} fill={colors[i]} />
                   ))}
                 </Pie>
                 <Legend />
                 <Tooltip
-                  formatter={(v: number) => formatVND(v)}
+                  formatter={(v: number) => formatCurrency(v)}
                   contentStyle={{
                     background: "var(--color-card)",
                     border: "1px solid var(--color-border)",
@@ -1036,37 +1046,37 @@ function ProfitTab() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground">Tổng thu</div>
-                <div className="text-2xl font-semibold text-success mt-1">
-                  {formatVND(r.totalIncome)}
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Tổng thu
                 </div>
+                <MoneyValue amount={r.totalIncome} tone="income" className="text-2xl mt-1 block" />
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground">Tổng chi</div>
-                <div className="text-2xl font-semibold text-destructive mt-1">
-                  {formatVND(r.totalExpense)}
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Tổng chi
                 </div>
+                <MoneyValue
+                  amount={r.totalExpense}
+                  tone="expense"
+                  className="text-2xl mt-1 block"
+                />
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground">Lợi nhuận</div>
-                {/* xanh nếu dương, đỏ nếu âm */}
-                <div
-                  className={`text-2xl font-semibold mt-1 ${
-                    r.profit >= 0 ? "text-success" : "text-destructive"
-                  }`}
-                >
-                  {formatVND(r.profit)}
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Lợi nhuận
                 </div>
+                {/* auto: xanh nếu dương, đỏ nếu âm — quan trọng vì tài sản có thể lỗ */}
+                <MoneyValue amount={r.profit} tone="auto" className="text-2xl mt-1 block" />
               </CardContent>
             </Card>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-            <BreakdownPie title="Cơ cấu thu" data={r.incomeBreakdown} />
-            <BreakdownPie title="Cơ cấu chi" data={r.expenseBreakdown} />
+            <BreakdownPie title="Cơ cấu thu" data={r.incomeBreakdown} tone="income" />
+            <BreakdownPie title="Cơ cấu chi" data={r.expenseBreakdown} tone="expense" />
           </div>
         </>
       ) : null}
@@ -1144,14 +1154,16 @@ function TaxTab() {
                 {rows.map((r) => (
                   <TableRow key={r.category}>
                     <TableCell>{CASH_FLOW_CATEGORY[r.category] ?? r.category}</TableCell>
-                    <TableCell className="text-right font-medium">{formatVND(r.amount)}</TableCell>
+                    <TableCell className="text-right">
+                      <MoneyValue amount={r.amount} tone="expense" />
+                    </TableCell>
                   </TableRow>
                 ))}
                 {rows.length > 0 && (
                   <TableRow className="bg-muted/40 font-semibold">
                     <TableCell>Tổng cộng</TableCell>
                     <TableCell className="text-right">
-                      {formatVND(query.data?.totalTax ?? 0)}
+                      {formatCurrency(query.data?.totalTax ?? 0)}
                     </TableCell>
                   </TableRow>
                 )}

@@ -10,6 +10,8 @@ import {
   Building,
   ShieldCheck,
   Megaphone,
+  Globe,
+  ExternalLink,
 } from "lucide-react";
 import {
   Sidebar,
@@ -68,6 +70,16 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                {/* Trang công khai — mở tab mới để xem song song lúc đang thao tác nội bộ */}
+                <SidebarMenuButton asChild tooltip="Xem trang công khai">
+                  <a href="/tin-dang" target="_blank" rel="noopener noreferrer">
+                    <Globe />
+                    <span>Marketplace</span>
+                    <ExternalLink className="ml-auto h-3 w-3 opacity-50 group-data-[collapsible=icon]:hidden" />
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

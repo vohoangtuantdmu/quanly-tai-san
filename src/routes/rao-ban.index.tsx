@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { saleListingsApi } from "@/lib/api/sale-listings";
 import { getErrorMessage } from "@/lib/api/errors";
-import { formatDate, formatVND } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import { SALE_LISTING_STATUS, SALE_LISTING_STATUS_CLASS } from "@/constants/enums";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,7 @@ function SalePage() {
                   <div>
                     <div className="text-xs text-muted-foreground">Giá đã báo</div>
                     <div className="text-lg font-semibold text-primary">
-                      {formatVND(l.askingPrice)}
+                      {formatCurrency(l.askingPrice)}
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground text-right">
