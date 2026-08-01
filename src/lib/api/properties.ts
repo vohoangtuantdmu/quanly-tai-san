@@ -18,6 +18,13 @@ export interface PublicPropertySummaryDto {
   bathrooms: number | null;
   area: number | null;
   thumbnailUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  // patch-10: có giá trị khi tìm kèm toạ độ (Giai đoạn 2), null khi lọc theo City/District như hiện tại
+  distanceMeters: number | null;
+  // Giả định optional — API hiện tại (theo đặc tả patch-10) không xác nhận có field này ở
+  // summary DTO; để optional + render có điều kiện, không giả định sai nếu backend chưa trả về.
+  createdAt?: string | null;
 }
 
 export interface PublicPropertyDetailDto {
@@ -70,6 +77,11 @@ export interface PublicListingFilters {
   priceMax?: number | "";
   bedroomsMin?: number | "";
   keyword?: string;
+  // patch-10, tuỳ chọn — chưa dùng ở Giai đoạn 1 (bố cục cốt lõi), để dành Giai đoạn 2
+  // (geocoding địa chỉ, "Tìm trong khu vực này")
+  latitude?: number | "";
+  longitude?: number | "";
+  radiusMeters?: number | "";
   page?: number;
   pageSize?: number;
 }

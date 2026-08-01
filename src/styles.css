@@ -147,3 +147,11 @@
   }
   h1, h2, h3, h4 { letter-spacing: -0.01em; }
 }
+
+/* Marker viên thuốc dạng L.divIcon ở Marketplace — bỏ style mặc định của Leaflet
+   (nền/viền/shadow trắng vuông) để dùng đúng style pill tự vẽ trong PropertyMap.tsx */
+.leaflet-div-icon.property-pill-marker {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
