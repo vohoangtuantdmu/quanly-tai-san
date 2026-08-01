@@ -1,11 +1,18 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useStore } from "@/lib/store";
-import { formatVND, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import type { LeaseContract } from "@/lib/types";
 
@@ -25,7 +32,8 @@ export function RenewContractDialog({ contractId, open, onOpenChange }: Props) {
 
   const handleRenew = () => {
     const start = new Date(contract.endDate);
-    const end = new Date(start); end.setMonth(end.getMonth() + months);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + months);
     const nc: LeaseContract = {
       ...contract,
       id: `k-${Date.now()}`,
@@ -37,7 +45,9 @@ export function RenewContractDialog({ contractId, open, onOpenChange }: Props) {
       parentContractId: contract.id,
     };
     store.renewContract(contract.id, nc);
-    toast.success("Đã tạo hợp đồng gia hạn", { description: `HĐ mới ${nc.code} có hiệu lực đến ${formatDate(nc.endDate)}` });
+    toast.success("Đã tạo hợp đồng gia hạn", {
+      description: `HĐ mới ${nc.code} có hiệu lực đến ${formatDate(nc.endDate)}`,
+    });
     onOpenChange(false);
   };
 
@@ -46,25 +56,40 @@ export function RenewContractDialog({ contractId, open, onOpenChange }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Gia hạn hợp đồng {contract.code}</DialogTitle>
-          <DialogDescription>Tạo hợp đồng nối tiếp bắt đầu từ ngày {formatDate(contract.endDate)}.</DialogDescription>
+          <DialogDescription>
+            Tạo hợp đồng nối tiếp bắt đầu từ ngày {formatDate(contract.endDate)}.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md border p-3 bg-muted/40 text-sm">
             <div className="text-xs text-muted-foreground">Hợp đồng hiện tại</div>
             <div className="font-medium mt-0.5">{contract.code}</div>
-            <div className="text-xs text-muted-foreground mt-1">Giá thuê hiện tại: {formatVND(contract.rentAmount)} / {contract.paymentCycle}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Giá thuê hiện tại: {formatCurrency(contract.rentAmount)} / {contract.paymentCycle}
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Giá thuê mới (VNĐ)</Label>
-            <Input type="number" value={newRent} onChange={(e) => setNewRent(Number(e.target.value))} />
+            <Input
+              type="number"
+              value={newRent}
+              onChange={(e) => setNewRent(Number(e.target.value))}
+            />
           </div>
           <div className="space-y-2">
             <Label>Thời hạn mới (tháng)</Label>
-            <Input type="number" value={months} onChange={(e) => setMonths(Number(e.target.value))} min={1} />
+            <Input
+              type="number"
+              value={months}
+              onChange={(e) => setMonths(Number(e.target.value))}
+              min={1}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Huỷ</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Huỷ
+          </Button>
           <Button onClick={handleRenew}>Xác nhận gia hạn</Button>
         </DialogFooter>
       </DialogContent>
@@ -81,7 +106,10 @@ export function TerminateContractDialog({ contractId, open, onOpenChange }: Prop
   if (!contract) return null;
 
   const handleTerminate = () => {
-    if (!reason.trim()) { toast.error("Vui lòng nhập lý do chấm dứt"); return; }
+    if (!reason.trim()) {
+      toast.error("Vui lòng nhập lý do chấm dứt");
+      return;
+    }
     store.terminateContract(contract.id, new Date(date).toISOString(), reason);
     toast.success("Đã chấm dứt hợp đồng");
     onOpenChange(false);
@@ -101,12 +129,21 @@ export function TerminateContractDialog({ contractId, open, onOpenChange }: Prop
           </div>
           <div className="space-y-2">
             <Label>Lý do</Label>
-            <Textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="VD: Người thuê yêu cầu trả nhà sớm..." />
+            <Textarea
+              rows={3}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="VD: Người thuê yêu cầu trả nhà sớm..."
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Huỷ</Button>
-          <Button variant="destructive" onClick={handleTerminate}>Xác nhận chấm dứt</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Huỷ
+          </Button>
+          <Button variant="destructive" onClick={handleTerminate}>
+            Xác nhận chấm dứt
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -5,7 +5,7 @@ import { assetsApi, type MaintenanceDto, type MaintenanceInput } from "@/lib/api
 import { contactsApi } from "@/lib/api/contacts";
 import { toIsoUtc } from "@/lib/api/contracts";
 import { getErrorMessage } from "@/lib/api/errors";
-import { formatDate, formatVND } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -157,7 +157,7 @@ export function MaintenanceTab({ assetId }: { assetId: string }) {
                       {m.completedDate ? ` → ${formatDate(m.completedDate)}` : ""}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {m.cost != null ? formatVND(m.cost) : "—"}
+                      {m.cost != null ? formatCurrency(m.cost) : "—"}
                     </TableCell>
                     <TableCell className="text-sm">{m.vendorName ?? "—"}</TableCell>
                     <TableCell>

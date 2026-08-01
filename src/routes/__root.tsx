@@ -20,20 +20,7 @@ import { UserMenu } from "@/components/layout/UserMenu";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
-
-// "/tin-dang" = marketplace công khai — tự render PublicHeader, không dùng shell nội bộ
-const PUBLIC_PREFIXES = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-  "/confirm-email",
-  "/403",
-  "/tin-dang",
-];
-function isPublicPath(p: string) {
-  return PUBLIC_PREFIXES.some((x) => p === x || p.startsWith(x + "/"));
-}
+import { isPublicPath } from "@/lib/publicPaths";
 
 function NotFoundComponent() {
   return (

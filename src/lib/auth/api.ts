@@ -1,5 +1,6 @@
 import { ApiError, type AuthResponse, type ProblemDetails } from "./types";
 import { clearAuth, loadAuth, saveAuth } from "./storage";
+import { isPublicPath } from "@/lib/publicPaths";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "https://localhost:7129/api";
 
@@ -88,7 +89,7 @@ export interface ApiOptions extends Omit<RequestInit, "body"> {
 
 export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Promise<T> {
   const { body, auth, skipAuth, headers, ...rest } = opts;
-  const attachAuth = skipAuth ? false : auth ?? !isAnonymous(path);
+  const attachAuth = skipAuth ? false : (auth ?? !isAnonymous(path));
 
   // Chủ động refresh trước khi hết hạn
   if (attachAuth && shouldPreemptRefresh()) {
@@ -128,7 +129,15 @@ export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Pro
       res = await fetch(`${API_BASE}${path}`, makeInit(newToken));
     } else {
       clearAuth();
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      // Không ép chuyển hướng khỏi trang công khai (VD: /tin-dang) — phiên hết hạn
+      // của một request nền (như bootstrap /account/me) không có nghĩa là khách
+      // đang xem trang công khai cần đăng nhập. AuthContext tự set user=null và
+      // trang công khai vẫn hiển thị bình thường ở chế độ khách.
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/login") &&
+        !isPublicPath(window.location.pathname)
+      ) {
         const redirect = window.location.pathname + window.location.search;
         window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
       }
