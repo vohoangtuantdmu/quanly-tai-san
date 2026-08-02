@@ -6,11 +6,23 @@
 // Client-only, load qua React.lazy (xem PropertyMapClient.tsx).
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Circle,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
 import { formatCurrency } from "@/lib/format";
+import { formatListingPrice } from "@/lib/api/properties";
 import type { ListingTypeCode } from "@/constants/enums";
 import type { LatLng } from "@/hooks/useGeolocationOnce";
+import type { PaymentCycleCode } from "@/constants/enums";
+import { ImageIcon } from "lucide-react";
 
 const OSM_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -31,6 +43,12 @@ export interface PropertyMapPoint {
   lng: number;
   price: number;
   type: ListingTypeCode;
+  // Cho popup xem nhanh (Phần A) — optional để component vẫn dùng được cho các điểm
+  // không cần popup (VD nếu sau này tái dùng cho mục đích khác)
+  slug?: string;
+  title?: string;
+  thumbnailUrl?: string | null;
+  rentPaymentCycle?: PaymentCycleCode | null;
 }
 
 function pillIcon(point: PropertyMapPoint, hovered: boolean): L.DivIcon {
@@ -116,6 +134,74 @@ function MapController({
   return null;
 }
 
+/** Thẻ xem nhanh trong Popup khi click marker — ảnh nhỏ + giá + tên rút gọn + link chi tiết. */
+function MiniPropertyCard({ point }: { point: PropertyMapPoint }) {
+  return (
+    <div style={{ width: 180 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+        }}
+      >
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 6,
+            overflow: "hidden",
+            flexShrink: 0,
+            background: "var(--color-muted)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {point.thumbnailUrl ? (
+            <img
+              src={point.thumbnailUrl}
+              alt={point.title}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <ImageIcon size={20} color="var(--color-muted-foreground)" />
+          )}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: "var(--color-foreground)" }}>
+            {formatListingPrice(point.price, point.type, point.rentPaymentCycle ?? null)}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--color-muted-foreground)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {point.title}
+          </div>
+        </div>
+      </div>
+      <Link
+        to="/tin-dang/$slug"
+        params={{ slug: point.slug! }}
+        style={{
+          display: "block",
+          marginTop: 6,
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--color-primary)",
+        }}
+      >
+        Xem chi tiết →
+      </Link>
+    </div>
+  );
+}
+
 interface PropertyMapProps {
   points: PropertyMapPoint[];
   hoveredId: string | null;
@@ -188,13 +274,19 @@ export default function PropertyMap({
         )}
 
         {userLocation && (
-          <Marker position={[userLocation.lat, userLocation.lng]} icon={USER_LOCATION_ICON} />
+          <Marker
+            position={[userLocation.lat, userLocation.lng]}
+            icon={USER_LOCATION_ICON}
+            alt="Vị trí hiện tại của bạn"
+            keyboard={false}
+          />
         )}
 
         {searchCenter && (
           <Marker
             position={[searchCenter.lat, searchCenter.lng]}
             icon={SEARCH_PIN_ICON}
+            alt="Kéo để đổi vị trí tìm kiếm"
             draggable
             eventHandlers={{
               dragend: (e) => {
@@ -210,12 +302,20 @@ export default function PropertyMap({
             key={p.id}
             position={[p.lat, p.lng]}
             icon={icons.get(p.id)}
+            alt={`Tin đăng giá ${formatCurrency(p.price, { compact: true })}`}
             eventHandlers={{
               mouseover: () => onHoverPoint(p.id),
               mouseout: () => onHoverPoint(null),
               click: () => onClickPoint(p.id),
             }}
-          />
+          >
+            {/* Popup xem nhanh — song song với hành vi cuộn danh sách (onClickPoint ở trên) */}
+            {p.slug && p.title && (
+              <Popup autoPan={false} closeButton minWidth={200}>
+                <MiniPropertyCard point={p} />
+              </Popup>
+            )}
+          </Marker>
         ))}
       </MapContainer>
     </div>

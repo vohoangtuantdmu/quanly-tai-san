@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type L from "leaflet";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
@@ -35,6 +35,8 @@ import {
   Map as MapIcon,
   LocateFixed,
   RotateCcw,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/tin-dang/")({
@@ -62,6 +64,15 @@ function PublicListingsPage() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Callback ỔN ĐỊNH (deps rỗng) truyền cho PropertyListCard đã bọc React.memo — nếu tạo
+  // closure mới mỗi render (như trước) thì memo vô nghĩa, toàn bộ danh sách vẫn re-render
+  // mỗi khi hoveredId đổi thay vì chỉ card liên quan.
+  const handleCardHover = useCallback((id: string) => setHoveredId(id), []);
+  const handleCardLeave = useCallback(
+    (id: string) => setHoveredId((cur) => (cur === id ? null : cur)),
+    [],
+  );
 
   // ---- Giai đoạn 2: vị trí + bán kính tìm kiếm ----
   const { status: geoStatus, position: userLocation } = useGeolocationOnce();
@@ -151,6 +162,10 @@ function PublicListingsPage() {
           lng: p.longitude,
           price: p.price,
           type: p.type,
+          slug: p.slug,
+          title: p.title,
+          thumbnailUrl: p.thumbnailUrl,
+          rentPaymentCycle: p.rentPaymentCycle,
         })),
     [items],
   );
@@ -324,14 +339,15 @@ function PublicListingsPage() {
       <LocateFixed className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         placeholder="Tìm theo địa chỉ, quận, thành phố..."
-        className="pl-9 h-8"
+        className="pl-9 pr-8 h-8"
         value={addressQuery}
         onChange={(e) => setAddressQuery(e.target.value)}
       />
       {geocoding && (
-        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-          Đang tìm...
-        </span>
+        <Loader2
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground"
+          aria-label="Đang tìm địa chỉ..."
+        />
       )}
     </div>
   );
@@ -363,8 +379,12 @@ function PublicListingsPage() {
       ))}
     </div>
   ) : query.isError ? (
-    <Card className="p-8 text-center text-sm text-destructive">
-      {getErrorMessage(query.error, "Không tải được danh sách tin đăng")}
+    <Card className="p-8 text-center text-sm text-destructive space-y-3">
+      <AlertTriangle className="h-8 w-8 mx-auto text-destructive/60" />
+      <p>{getErrorMessage(query.error, "Không tải được danh sách tin đăng")}</p>
+      <Button size="sm" variant="outline" onClick={() => query.refetch()}>
+        Thử lại
+      </Button>
     </Card>
   ) : items.length === 0 ? (
     <Card className="p-10 text-center text-sm text-muted-foreground space-y-1.5">
@@ -373,7 +393,13 @@ function PublicListingsPage() {
       <p>Thử mở rộng bán kính tìm kiếm hoặc bỏ bớt bộ lọc.</p>
     </Card>
   ) : (
-    <>
+    // Fade nhẹ (không nhảy cóc) khi đổi filter mà đang refetch — vẫn giữ layout cũ, không
+    // thay skeleton hoàn toàn để tránh "giật" bố cục
+    <div
+      className={`space-y-4 transition-opacity duration-200 ${
+        query.isFetching ? "opacity-60" : "opacity-100"
+      }`}
+    >
       <div className="grid grid-cols-2 gap-3">
         {items.map((p) => (
           <PropertyListCard
@@ -384,8 +410,8 @@ function PublicListingsPage() {
             }}
             hovered={hoveredId === p.id}
             highlighted={highlightedId === p.id}
-            onHover={() => setHoveredId(p.id)}
-            onLeave={() => setHoveredId((cur) => (cur === p.id ? null : cur))}
+            onHover={handleCardHover}
+            onLeave={handleCardLeave}
           />
         ))}
       </div>
@@ -412,7 +438,7 @@ function PublicListingsPage() {
           </Button>
         </div>
       )}
-    </>
+    </div>
   );
 
   // ---- Bản đồ + nút "Tìm trong khu vực này" (dùng chung mọi breakpoint) ----
