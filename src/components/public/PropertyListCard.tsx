@@ -1,8 +1,9 @@
-import { forwardRef, useState } from "react";
+import { forwardRef, memo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { formatListingPrice, type PublicPropertySummaryDto } from "@/lib/api/properties";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, MapPin, BedDouble, Bath, Ruler, ImageIcon, CheckCircle2 } from "lucide-react";
 
 /** "Đăng 2 ngày trước" — chỉ hiện khi có createdAt (field còn cần backend xác nhận). */
@@ -19,18 +20,29 @@ interface PropertyListCardProps {
   property: PublicPropertySummaryDto;
   hovered: boolean;
   highlighted: boolean;
-  onHover: () => void;
-  onLeave: () => void;
+  // Nhận id làm tham số thay vì đóng gói closure — để cha truyền được callback ỔN ĐỊNH
+  // (useCallback deps rỗng), giúp React.memo bên dưới thực sự chặn re-render thừa khi
+  // hoveredId đổi (chỉ card liên quan tới id đó mới re-render, không phải toàn danh sách).
+  onHover: (id: string) => void;
+  onLeave: (id: string) => void;
 }
 
-export const PropertyListCard = forwardRef<HTMLDivElement, PropertyListCardProps>(
-  function PropertyListCard({ property: p, hovered, highlighted, onHover, onLeave }, ref) {
+export const PropertyListCard = memo(
+  forwardRef<HTMLDivElement, PropertyListCardProps>(function PropertyListCard(
+    { property: p, hovered, highlighted, onHover, onLeave },
+    ref,
+  ) {
     const [favorited, setFavorited] = useState(false);
+    const [imgLoaded, setImgLoaded] = useState(false);
     const distanceKm = p.distanceMeters != null ? p.distanceMeters / 1000 : null;
 
     return (
-      <div ref={ref} onMouseEnter={onHover} onMouseLeave={onLeave}>
-        <Link to="/tin-dang/$slug" params={{ slug: p.slug }}>
+      <div ref={ref} onMouseEnter={() => onHover(p.id)} onMouseLeave={() => onLeave(p.id)}>
+        <Link
+          to="/tin-dang/$slug"
+          params={{ slug: p.slug }}
+          className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
           <Card
             className={`overflow-hidden py-0 gap-0 h-full transition-all duration-150 ${
               hovered ? "shadow-lg -translate-y-0.5" : "shadow-sm"
@@ -38,12 +50,19 @@ export const PropertyListCard = forwardRef<HTMLDivElement, PropertyListCardProps
           >
             <div className="relative aspect-[4/3] bg-muted">
               {p.thumbnailUrl ? (
-                <img
-                  src={p.thumbnailUrl}
-                  alt={p.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+                <>
+                  {/* Placeholder xám trong lúc ảnh tải, tránh giật layout */}
+                  {!imgLoaded && <Skeleton className="absolute inset-0 rounded-none" />}
+                  <img
+                    src={p.thumbnailUrl}
+                    alt={p.title}
+                    loading="lazy"
+                    onLoad={() => setImgLoaded(true)}
+                    className={`w-full h-full object-cover transition-opacity duration-200 ${
+                      imgLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ImageIcon className="h-10 w-10 text-muted-foreground/40" />
@@ -52,15 +71,20 @@ export const PropertyListCard = forwardRef<HTMLDivElement, PropertyListCardProps
               <button
                 type="button"
                 aria-label={favorited ? "Bỏ yêu thích" : "Yêu thích"}
+                aria-pressed={favorited}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setFavorited((f) => !f);
                 }}
-                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
+                {/* key đổi theo favorited → remount → animation heart-pop tự chạy lại mỗi lần bấm */}
                 <Heart
-                  className={`h-4 w-4 ${favorited ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
+                  key={favorited ? "on" : "off"}
+                  className={`h-4 w-4 animate-heart-pop ${
+                    favorited ? "fill-destructive text-destructive" : "text-muted-foreground"
+                  }`}
                 />
               </button>
               <Badge className="absolute top-2 left-2 bg-success/90 hover:bg-success/90 text-success-foreground gap-1">
@@ -110,5 +134,5 @@ export const PropertyListCard = forwardRef<HTMLDivElement, PropertyListCardProps
         </Link>
       </div>
     );
-  },
+  }),
 );
