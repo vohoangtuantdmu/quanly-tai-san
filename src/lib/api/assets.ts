@@ -4,6 +4,7 @@ import { ApiError } from "@/lib/auth/types";
 import type {
   AssetStatusCode,
   AssetTypeCode,
+  DocumentTypeCode,
   EquipmentConditionCode,
   EquipmentSourceCode,
   OccupantTypeCode,
@@ -153,6 +154,29 @@ export interface AssetMediaItem {
   sortOrder: number;
 }
 
+// ---- Giấy tờ ----
+export interface AssetDocumentDto {
+  id: string;
+  assetId: string;
+  type: DocumentTypeCode;
+  title: string;
+  file: AssetMediaFile;
+  issueDate: string | null;
+  expiryDate: string | null;
+  leaseContractId: string | null;
+  notes: string | null;
+}
+
+export interface AssetDocumentUploadInput {
+  file: File;
+  type: DocumentTypeCode;
+  title: string;
+  issueDate: string;
+  expiryDate?: string | null;
+  leaseContractId?: string | null;
+  notes?: string | null;
+}
+
 // ---- Nhóm D: Vận hành ----
 export interface EquipmentDto {
   id: string;
@@ -288,6 +312,24 @@ export const assetsApi = {
     },
     setThumbnailFromMedia: (assetId: string, mediaId: string) =>
       api<AssetDetail>(`/assets/${assetId}/thumbnail/from-media/${mediaId}`, { method: "PUT" }),
+  },
+
+  documents: {
+    list: (assetId: string, type?: DocumentTypeCode) =>
+      api<AssetDocumentDto[]>(`/assets/${assetId}/documents${toQuery({ type })}`),
+    upload: (assetId: string, input: AssetDocumentUploadInput) => {
+      const fd = new FormData();
+      fd.append("file", input.file);
+      fd.append("type", String(input.type));
+      fd.append("title", input.title);
+      fd.append("issueDate", input.issueDate);
+      if (input.expiryDate) fd.append("expiryDate", input.expiryDate);
+      if (input.leaseContractId) fd.append("leaseContractId", input.leaseContractId);
+      if (input.notes) fd.append("notes", input.notes);
+      return apiForm<AssetDocumentDto>(`/assets/${assetId}/documents`, fd, "POST");
+    },
+    remove: (assetId: string, documentId: string) =>
+      api<void>(`/assets/${assetId}/documents/${documentId}`, { method: "DELETE" }),
   },
 
   equipment: {
