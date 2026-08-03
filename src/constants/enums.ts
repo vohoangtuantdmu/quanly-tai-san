@@ -205,6 +205,20 @@ export const SALE_LISTING_STATUS_CLASS: Record<SaleListingStatusCode, string> = 
   4: "bg-muted text-muted-foreground border-border",
 };
 
+export const DOCUMENT_TYPE = {
+  1: "Sổ đỏ/sổ hồng",
+  2: "HĐ mua bán",
+  3: "HĐ thuê",
+  4: "Phụ lục HĐ",
+  5: "HĐ uỷ quyền",
+  6: "HĐ điện",
+  7: "HĐ nước",
+  8: "Hồ sơ thuế",
+  9: "Hoá đơn",
+  99: "Khác",
+} as const;
+export type DocumentTypeCode = keyof typeof DOCUMENT_TYPE;
+
 // ---- Marketplace: tin đăng công khai ----
 
 export const LISTING_TYPE = { 1: "Bán", 2: "Cho thuê" } as const;

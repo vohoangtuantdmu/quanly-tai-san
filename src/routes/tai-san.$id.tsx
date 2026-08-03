@@ -43,6 +43,7 @@ import { UsagePeriodsTab } from "@/components/assets/UsagePeriodsTab";
 import { SaleListingTab } from "@/components/assets/SaleListingTab";
 import { AssetUnitsTab } from "@/components/units/AssetUnitsTab";
 import { AssetContractsTab } from "@/components/contracts/AssetContractsTab";
+import { AssetDocumentsTab } from "@/components/assets/AssetDocumentsTab";
 import { ClientMap } from "@/components/map/ClientMap";
 
 export const Route = createFileRoute("/tai-san/$id")({
@@ -294,11 +295,7 @@ function AssetDetail() {
           </TabsContent>
         )}
         <TabsContent value="docs">
-          <Card>
-            <CardContent className="py-14 text-center text-sm text-muted-foreground">
-              Sắp có — Giấy tờ pháp lý.
-            </CardContent>
-          </Card>
+          <AssetDocumentsTab assetId={id} />
         </TabsContent>
       </Tabs>
 

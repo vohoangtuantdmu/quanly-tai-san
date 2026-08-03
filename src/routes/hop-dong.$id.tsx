@@ -18,6 +18,7 @@ import {
 import { formatDate, formatCurrency } from "@/lib/format";
 import { getErrorMessage } from "@/lib/api/errors";
 import { CurrencyInput } from "@/components/CurrencyInput";
+import { ContractDocumentsBlock } from "@/components/contracts/ContractDocumentsBlock";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -191,6 +192,8 @@ function ContractDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ContractDocumentsBlock contract={c} />
 
       <RenewDialog id={id} contract={c} open={renewOpen} onOpenChange={setRenewOpen} />
       <TerminateDialog id={id} open={termOpen} onOpenChange={setTermOpen} />
