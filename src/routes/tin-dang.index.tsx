@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type L from "leaflet";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   propertiesApi,
   type PublicListingFilters,
@@ -14,7 +15,7 @@ import { PropertyListCard } from "@/components/public/PropertyListCard";
 import { MobileListSheet } from "@/components/public/MobileListSheet";
 import { PropertyMapClient } from "@/components/map/PropertyMapClient";
 import type { PropertyMapPoint } from "@/components/map/PropertyMap";
-import { useGeolocationOnce, type LatLng } from "@/hooks/useGeolocationOnce";
+import { useGeolocationOnDemand, type LatLng } from "@/hooks/useGeolocationOnDemand";
 import { useViewportKind } from "@/hooks/useViewportKind";
 import { geocodeAddress } from "@/lib/geocode";
 import { CurrencyInput } from "@/components/CurrencyInput";
@@ -37,6 +38,7 @@ import {
   RotateCcw,
   Loader2,
   AlertTriangle,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/tin-dang/")({
@@ -74,23 +76,61 @@ function PublicListingsPage() {
     [],
   );
 
-  // ---- Giai đoạn 2: vị trí + bán kính tìm kiếm ----
-  const { status: geoStatus, position: userLocation } = useGeolocationOnce();
+  // ---- Vị trí + bán kính tìm kiếm — chỉ xin quyền vị trí khi người dùng chủ động
+  // bấm nút "Tìm quanh vị trí hiện tại", KHÔNG tự xin quyền khi vào trang. Mặc định
+  // mở trang là xem toàn bộ tin đã duyệt, không lọc theo vị trí. ----
+  const { status: geoStatus, position: userLocation, requestId, request: requestGeolocation } =
+    useGeolocationOnDemand();
   const [searchCenter, setSearchCenter] = useState<LatLng | null>(null);
   const [radiusMeters, setRadiusMeters] = useState<number | null>(null);
   const [showSearchAreaButton, setShowSearchAreaButton] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
 
-  // GPS thành công lần đầu → dùng làm tâm tìm kiếm mặc định (chỉ 1 lần, không ghi đè nếu
-  // người dùng đã tự đổi searchCenter trước khi GPS trả về kịp)
-  const gpsAppliedRef = useRef(false);
+  const [usingMyLocation, setUsingMyLocation] = useState(false);
+  const [myLocationRadiusKm, setMyLocationRadiusKm] = useState(5);
+  const [radiusPopoverOpen, setRadiusPopoverOpen] = useState(false);
+  const [radiusInput, setRadiusInput] = useState("5");
+  const pendingRadiusKmRef = useRef<number | null>(null);
+
+  // Xử lý kết quả sau khi request() hoàn tất (được gọi từ nút "Tìm kiếm" trong popover) —
+  // requestId chỉ đổi khi có kết quả mới (granted/denied), tránh xử lý trùng.
   useEffect(() => {
-    if (geoStatus === "granted" && userLocation && !gpsAppliedRef.current) {
-      gpsAppliedRef.current = true;
+    if (requestId === 0 || pendingRadiusKmRef.current == null) return;
+    const km = pendingRadiusKmRef.current;
+    pendingRadiusKmRef.current = null;
+    if (geoStatus === "granted" && userLocation) {
       setSearchCenter(userLocation);
-      setRadiusMeters(DEFAULT_RADIUS_METERS);
+      setRadiusMeters(km * 1000);
+      setUsingMyLocation(true);
+      setMyLocationRadiusKm(km);
+      setShowSearchAreaButton(false);
+      setPage(1);
+      setRadiusPopoverOpen(false);
+    } else if (geoStatus === "denied" || geoStatus === "unsupported") {
+      toast.error(
+        "Không thể lấy vị trí — vui lòng cho phép quyền truy cập vị trí trên trình duyệt, hoặc thử tìm theo địa chỉ cụ thể ở ô tìm kiếm.",
+      );
     }
-  }, [geoStatus, userLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestId]);
+
+  const submitLocationSearch = () => {
+    const km = Number(radiusInput.replace(",", "."));
+    if (!Number.isFinite(km) || km < 0.5 || km > 50) {
+      toast.error("Bán kính phải trong khoảng 0.5 – 50 km");
+      return;
+    }
+    pendingRadiusKmRef.current = km;
+    requestGeolocation();
+  };
+
+  const clearMyLocationSearch = () => {
+    setSearchCenter(null);
+    setRadiusMeters(null);
+    setUsingMyLocation(false);
+    setShowSearchAreaButton(false);
+    setPage(1);
+  };
 
   // ---- Ô tìm khu vực (geocoding) — debounce 500ms ----
   const [addressQuery, setAddressQuery] = useState("");
@@ -105,6 +145,7 @@ function PublicListingsPage() {
         if (result) {
           setSearchCenter({ lat: result.lat, lng: result.lng });
           setRadiusMeters(DEFAULT_RADIUS_METERS);
+          setUsingMyLocation(false);
           setShowSearchAreaButton(false);
         }
       } catch {
@@ -184,6 +225,7 @@ function PublicListingsPage() {
   const handleSearchCenterChange = (c: LatLng) => {
     setSearchCenter(c);
     if (radiusMeters == null) setRadiusMeters(DEFAULT_RADIUS_METERS);
+    setUsingMyLocation(false);
     setShowSearchAreaButton(false);
     setPage(1);
   };
@@ -196,6 +238,7 @@ function PublicListingsPage() {
     const newRadius = center.distanceTo(bounds.getNorthEast()); // Leaflet tính sẵn, không cần haversine tay
     setSearchCenter({ lat: center.lat, lng: center.lng });
     setRadiusMeters(newRadius);
+    setUsingMyLocation(false);
     setShowSearchAreaButton(false);
     setPage(1);
   };
@@ -331,6 +374,66 @@ function PublicListingsPage() {
           </div>
         </PopoverContent>
       </Popover>
+
+      <div className="inline-flex items-center gap-1">
+        <Popover open={radiusPopoverOpen} onOpenChange={setRadiusPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              size="sm"
+              variant={usingMyLocation ? "secondary" : "outline"}
+              className="h-8"
+              onClick={() => setRadiusPopoverOpen(true)}
+            >
+              <LocateFixed className="h-3.5 w-3.5 mr-1.5" />
+              {usingMyLocation
+                ? `Đang tìm quanh vị trí của bạn (${myLocationRadiusKm}km)`
+                : "Tìm quanh vị trí hiện tại của tôi"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <LocateFixed className="h-4 w-4" />
+              Tìm quanh vị trí hiện tại
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Trong bán kính (km)</Label>
+              <Input
+                type="number"
+                min={0.5}
+                max={50}
+                step={0.5}
+                value={radiusInput}
+                onChange={(e) => setRadiusInput(e.target.value)}
+              />
+            </div>
+            {geoStatus === "pending" && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Đang xin quyền vị trí...
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={() => setRadiusPopoverOpen(false)}>
+                Huỷ
+              </Button>
+              <Button size="sm" onClick={submitLocationSearch} disabled={geoStatus === "pending"}>
+                Tìm kiếm
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        {usingMyLocation && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            aria-label="Xoá bộ lọc vị trí"
+            onClick={clearMyLocationSearch}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
     </>
   );
 
