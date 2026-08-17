@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 export interface LatLng {
   lat: number;
@@ -8,36 +8,39 @@ export interface LatLng {
 export type GeolocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported";
 
 /**
- * Hỏi vị trí trình duyệt ĐÚNG 1 LẦN khi component mount — không tự gọi lại
- * getCurrentPosition dù bị từ chối/lỗi, tránh popup xin quyền lặp lại gây khó chịu.
- * Muốn thử lại phải qua hành động chủ động của người dùng (không có trong Giai đoạn 2).
+ * Hỏi vị trí trình duyệt CHỈ KHI người dùng chủ động gọi `request()` — không tự
+ * xin quyền khi mount. Mỗi lần request() tăng `requestId` để nơi gọi phân biệt
+ * được kết quả nào ứng với lần bấm nào (tránh xử lý nhầm kết quả cũ).
  */
-export function useGeolocationOnce(): { status: GeolocationStatus; position: LatLng | null } {
+export function useGeolocationOnDemand(): {
+  status: GeolocationStatus;
+  position: LatLng | null;
+  requestId: number;
+  request: () => void;
+} {
   const [status, setStatus] = useState<GeolocationStatus>("idle");
   const [position, setPosition] = useState<LatLng | null>(null);
-  const askedRef = useRef(false);
+  const [requestId, setRequestId] = useState(0);
 
-  useEffect(() => {
-    if (askedRef.current) return;
-    askedRef.current = true;
-
+  const request = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setStatus("unsupported");
       return;
     }
-
     setStatus("pending");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setStatus("granted");
+        setRequestId((id) => id + 1);
       },
       () => {
         setStatus("denied");
+        setRequestId((id) => id + 1);
       },
       { timeout: 5000 },
     );
   }, []);
 
-  return { status, position };
+  return { status, position, requestId, request };
 }

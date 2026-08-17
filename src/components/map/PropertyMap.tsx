@@ -20,7 +20,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { formatCurrency } from "@/lib/format";
 import { formatListingPrice } from "@/lib/api/properties";
 import type { ListingTypeCode } from "@/constants/enums";
-import type { LatLng } from "@/hooks/useGeolocationOnce";
+import type { LatLng } from "@/hooks/useGeolocationOnDemand";
 import type { PaymentCycleCode } from "@/constants/enums";
 import { ImageIcon } from "lucide-react";
 
