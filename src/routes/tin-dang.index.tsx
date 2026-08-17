@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import type L from "leaflet";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,6 +22,11 @@ import { PropertyListCard } from "@/components/public/PropertyListCard";
 import { MobileListSheet } from "@/components/public/MobileListSheet";
 import { PropertyMapClient } from "@/components/map/PropertyMapClient";
 import type { PropertyMapPoint } from "@/components/map/PropertyMap";
+import { LocationSearchPopover } from "@/components/public/LocationSearchPopover";
+import {
+  DemandSearchSheet,
+  type DemandSearchResult,
+} from "@/components/public/DemandSearchSheet";
 import { useGeolocationOnDemand, type LatLng } from "@/hooks/useGeolocationOnDemand";
 import { useViewportKind } from "@/hooks/useViewportKind";
 import { geocodeAddress } from "@/lib/geocode";
@@ -38,6 +50,7 @@ import {
   RotateCcw,
   Loader2,
   AlertTriangle,
+  Target,
   X,
 } from "lucide-react";
 
@@ -48,6 +61,8 @@ export const Route = createFileRoute("/tin-dang/")({
 
 const DEFAULT_CENTER: [number, number] = [10.7769, 106.7009]; // TP.HCM
 const DEFAULT_RADIUS_METERS = 5000;
+const LIST_WIDTH_STORAGE_KEY = "tin-dang:list-width-percent";
+const DEMAND_BANNER_DISMISSED_KEY = "tin-dang:demand-banner-dismissed";
 
 function PublicListingsPage() {
   const viewportKind = useViewportKind();
@@ -114,14 +129,20 @@ function PublicListingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId]);
 
-  const submitLocationSearch = () => {
-    const km = Number(radiusInput.replace(",", "."));
+  // Dùng chung cho cả popover "Tìm quanh vị trí hiện tại" lẫn lựa chọn "Gần vị trí hiện
+  // tại" trong form "Tìm theo nhu cầu" — validate + xin quyền vị trí đúng 1 chỗ.
+  const triggerLocationSearch = (km: number): boolean => {
     if (!Number.isFinite(km) || km < 0.5 || km > 50) {
       toast.error("Bán kính phải trong khoảng 0.5 – 50 km");
-      return;
+      return false;
     }
     pendingRadiusKmRef.current = km;
     requestGeolocation();
+    return true;
+  };
+
+  const submitLocationSearch = () => {
+    triggerLocationSearch(Number(radiusInput.replace(",", ".")));
   };
 
   const clearMyLocationSearch = () => {
@@ -164,6 +185,41 @@ function PublicListingsPage() {
     }, 400);
     return () => clearTimeout(t);
   }, [keywordInput]);
+
+  // ---- Banner mời "Tìm theo nhu cầu" — luôn bắt đầu ẩn (khớp SSR, tránh hydration
+  // mismatch), chỉ hiện sau khi mount nếu localStorage chưa đánh dấu đã đóng. ----
+  const [showDemandBanner, setShowDemandBanner] = useState(false);
+  const [demandSheetOpen, setDemandSheetOpen] = useState(false);
+
+  useEffect(() => {
+    const dismissed = window.localStorage.getItem(DEMAND_BANNER_DISMISSED_KEY) === "1";
+    if (!dismissed) setShowDemandBanner(true);
+  }, []);
+
+  const dismissDemandBanner = () => {
+    setShowDemandBanner(false);
+    window.localStorage.setItem(DEMAND_BANNER_DISMISSED_KEY, "1");
+  };
+
+  // Áp toàn bộ lựa chọn từ form "Tìm theo nhu cầu" vào bộ lọc hiện có — tái sử dụng
+  // đúng state/logic sẵn có (ô địa chỉ, city/district, luồng xin quyền vị trí), không
+  // viết trùng logic tìm kiếm.
+  const handleDemandApply = (result: DemandSearchResult) => {
+    setType(result.type);
+    setPriceMin(result.priceMin);
+    setPriceMax(result.priceMax);
+    setBedroomsMin(result.bedroomsMin);
+    if (result.location?.kind === "address") {
+      setAddressQuery(result.location.query);
+    } else if (result.location?.kind === "district") {
+      setCity(result.location.city);
+      setDistrict(result.location.district);
+    } else if (result.location?.kind === "myLocation") {
+      triggerLocationSearch(result.location.radiusKm);
+    }
+    setPage(1);
+    setDemandSheetOpen(false);
+  };
 
   const filters: PublicListingFilters = {
     type,
@@ -247,6 +303,49 @@ function PublicListingsPage() {
   const [tabletView, setTabletView] = useState<"list" | "map">("list");
   const [mobileSnap, setMobileSnap] = useState<number | string | null>(0.5);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // ---- Thanh kéo chỉnh tỷ lệ List/Map ở desktop — chỉ desktop mới có, tablet/mobile
+  // giữ nguyên bố cục toggle/bottom-sheet đã làm. Luôn khởi tạo 40% (khớp SSR, tránh
+  // hydration mismatch vì server không đọc được localStorage) — tỷ lệ đã lưu được áp
+  // lại ở effect riêng, chỉ chạy phía client sau khi mount. ----
+  const [listWidthPercent, setListWidthPercent] = useState(40);
+  const [isDraggingDivider, setIsDraggingDivider] = useState(false);
+  const desktopSplitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = Number(window.localStorage.getItem(LIST_WIDTH_STORAGE_KEY));
+    if (Number.isFinite(saved) && saved >= 25 && saved <= 60) setListWidthPercent(saved);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(LIST_WIDTH_STORAGE_KEY, String(listWidthPercent));
+  }, [listWidthPercent]);
+
+  const handleDividerMouseDown = (e: ReactMouseEvent) => {
+    e.preventDefault();
+    const container = desktopSplitRef.current;
+    if (!container) return;
+    const containerWidth = container.getBoundingClientRect().width;
+    const startX = e.clientX;
+    const startWidth = listWidthPercent;
+    setIsDraggingDivider(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const deltaPercent = ((ev.clientX - startX) / containerWidth) * 100;
+      setListWidthPercent(Math.min(60, Math.max(25, startWidth + deltaPercent)));
+    };
+    const onMouseUp = () => {
+      setIsDraggingDivider(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  };
 
   const activeFilterCount = (city.trim() ? 1 : 0) + (district.trim() ? 1 : 0);
 
@@ -375,65 +474,27 @@ function PublicListingsPage() {
         </PopoverContent>
       </Popover>
 
-      <div className="inline-flex items-center gap-1">
-        <Popover open={radiusPopoverOpen} onOpenChange={setRadiusPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              size="sm"
-              variant={usingMyLocation ? "secondary" : "outline"}
-              className="h-8"
-              onClick={() => setRadiusPopoverOpen(true)}
-            >
-              <LocateFixed className="h-3.5 w-3.5 mr-1.5" />
-              {usingMyLocation
-                ? `Đang tìm quanh vị trí của bạn (${myLocationRadiusKm}km)`
-                : "Tìm quanh vị trí hiện tại của tôi"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <LocateFixed className="h-4 w-4" />
-              Tìm quanh vị trí hiện tại
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Trong bán kính (km)</Label>
-              <Input
-                type="number"
-                min={0.5}
-                max={50}
-                step={0.5}
-                value={radiusInput}
-                onChange={(e) => setRadiusInput(e.target.value)}
-              />
-            </div>
-            {geoStatus === "pending" && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Đang xin quyền vị trí...
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button size="sm" variant="outline" onClick={() => setRadiusPopoverOpen(false)}>
-                Huỷ
-              </Button>
-              <Button size="sm" onClick={submitLocationSearch} disabled={geoStatus === "pending"}>
-                Tìm kiếm
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {usingMyLocation && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8"
-            aria-label="Xoá bộ lọc vị trí"
-            onClick={clearMyLocationSearch}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
+      <LocationSearchPopover
+        open={radiusPopoverOpen}
+        onOpenChange={setRadiusPopoverOpen}
+        usingMyLocation={usingMyLocation}
+        myLocationRadiusKm={myLocationRadiusKm}
+        radiusInput={radiusInput}
+        onRadiusInputChange={setRadiusInput}
+        pending={geoStatus === "pending"}
+        onSubmit={submitLocationSearch}
+        onClear={clearMyLocationSearch}
+      />
+
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-8"
+        onClick={() => setDemandSheetOpen(true)}
+      >
+        <Target className="h-3.5 w-3.5 mr-1.5" />
+        Tìm theo nhu cầu
+      </Button>
     </>
   );
 
@@ -466,6 +527,31 @@ function PublicListingsPage() {
       />
     </div>
   );
+
+  // ---- Banner mời "Tìm theo nhu cầu" — không chặn nội dung, nằm ngay trong luồng
+  // cuộn phía trên danh sách, người dùng vẫn dùng được trang duyệt tin bình thường. ----
+  const demandBanner = showDemandBanner ? (
+    <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center gap-2 text-sm">
+        <Target className="h-4 w-4 text-primary shrink-0" />
+        <span>Chưa biết tìm gì? Thử tìm theo nhu cầu cụ thể của bạn</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Button size="sm" onClick={() => setDemandSheetOpen(true)}>
+          Tìm theo nhu cầu
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7"
+          aria-label="Đóng thông báo"
+          onClick={dismissDemandBanner}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  ) : null;
 
   // ---- Nội dung danh sách (dùng chung mọi breakpoint) ----
   const listContent = query.isLoading ? (
@@ -672,16 +758,30 @@ function PublicListingsPage() {
         </div>
       )}
 
-      {/* ---- Desktop: split view List 40% / Map 60%, mỗi bên cuộn/cố định độc lập ---- */}
+      {/* ---- Desktop: split view List/Map kéo được tỷ lệ, mỗi bên cuộn/cố định độc lập ---- */}
       {viewportKind === "desktop" && (
-        <div className="flex-1 min-h-0 flex flex-row">
-          <div className="w-2/5 overflow-y-auto p-4 space-y-4">
+        <div ref={desktopSplitRef} className="flex-1 min-h-0 flex flex-row">
+          <div
+            className="overflow-y-auto p-4 space-y-4 shrink-0"
+            style={{ width: `${listWidthPercent}%` }}
+          >
+            {demandBanner}
             <p className="text-sm text-muted-foreground">
               {query.isLoading ? "Đang tải..." : `${data?.totalCount ?? 0} bất động sản`}
             </p>
             {listContent}
           </div>
-          <div className="w-3/5 border-l">{mapContent}</div>
+          {/* Thanh kéo chỉnh tỷ lệ List/Map — giới hạn 25%-60%, lưu vào localStorage */}
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Kéo để đổi tỷ lệ danh sách/bản đồ"
+            className={`w-2 shrink-0 cursor-col-resize border-l hover:bg-primary/20 active:bg-primary/30 transition-colors ${
+              isDraggingDivider ? "bg-primary/30" : ""
+            }`}
+            onMouseDown={handleDividerMouseDown}
+          />
+          <div className="flex-1 min-w-0">{mapContent}</div>
         </div>
       )}
 
@@ -691,6 +791,7 @@ function PublicListingsPage() {
           <div
             className={`absolute inset-0 overflow-y-auto p-4 space-y-4 ${tabletView === "list" ? "" : "invisible pointer-events-none"}`}
           >
+            {demandBanner}
             <p className="text-sm text-muted-foreground">
               {query.isLoading ? "Đang tải..." : `${data?.totalCount ?? 0} bất động sản`}
             </p>
@@ -713,10 +814,20 @@ function PublicListingsPage() {
             activeSnap={mobileSnap}
             onActiveSnapChange={setMobileSnap}
           >
-            <div className="space-y-3">{listContent}</div>
+            <div className="space-y-3">
+              {demandBanner}
+              {listContent}
+            </div>
           </MobileListSheet>
         </div>
       )}
+
+      <DemandSearchSheet
+        open={demandSheetOpen}
+        onOpenChange={setDemandSheetOpen}
+        onApply={handleDemandApply}
+        myLocationPending={geoStatus === "pending"}
+      />
     </div>
   );
 }
