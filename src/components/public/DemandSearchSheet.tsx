@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 // vietnam-provinces build ra 2 định dạng khác nhau: client dùng bản ESM (named export
 // nằm thẳng trên namespace), SSR (module runner của Vite) dùng bản CJS UMD và bọc toàn bộ
 // module.exports vào field `default` của namespace. Named-export import thẳng bị Vite báo
@@ -18,8 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ArrowRight, LocateFixed, Loader2 } from "lucide-react";
+import { ArrowRight, LocateFixed, Loader2, X } from "lucide-react";
 
 const vietnamProvinces: typeof import("vietnam-provinces") =
   (vietnamProvincesNs as { default?: typeof import("vietnam-provinces") }).default ??
@@ -96,6 +96,15 @@ export function DemandSearchSheet({
   );
   const priceChips = demandType === 1 ? SALE_PRICE_CHIPS : RENT_PRICE_CHIPS;
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onOpenChange(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
   const selectType = (t: ListingTypeCode) => {
     setDemandType(t);
     setPriceMin(null);
@@ -126,14 +135,39 @@ export function DemandSearchSheet({
     onApply({ type: demandType, priceMin, priceMax, bedroomsMin, location });
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Tìm bất động sản theo nhu cầu của bạn</SheetTitle>
-        </SheetHeader>
+  if (!open) return null;
 
-        <div className="mt-4 space-y-5">
+  // Modal căn giữa qua Portal thẳng vào document.body — không lồng trong container cha
+  // nào có thể có overflow:hidden/auto (bài học từ lỗi popover vị trí trước đó). Trước
+  // đây dùng Sheet (drawer trượt từ phải) nhưng bị tràn khỏi viewport; đổi sang modal
+  // căn giữa với maxWidth/maxHeight + overflowY cố định để không lặp lại lỗi tương tự.
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center p-4"
+      style={{ zIndex: 1000 }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onOpenChange(false);
+      }}
+    >
+      <div
+        className="bg-background text-foreground border rounded-lg shadow-lg w-full flex flex-col"
+        style={{ maxWidth: 560, maxHeight: "85vh" }}
+      >
+        <div className="flex items-center justify-between gap-4 p-6 pb-0 shrink-0">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">
+            Tìm bất động sản theo nhu cầu của bạn
+          </h2>
+          <button
+            type="button"
+            className="rounded-sm opacity-70 hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+            aria-label="Đóng"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5 overflow-y-auto">
           <div className="space-y-2">
             <Label>Bạn muốn</Label>
             <div className="inline-flex rounded-md border p-0.5">
@@ -325,7 +359,7 @@ export function DemandSearchSheet({
           </div>
         </div>
 
-        <SheetFooter className="mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 p-6 pt-4 border-t shrink-0">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Huỷ
           </Button>
@@ -333,8 +367,9 @@ export function DemandSearchSheet({
             Tìm kiếm
             <ArrowRight className="h-4 w-4 ml-1.5" />
           </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
