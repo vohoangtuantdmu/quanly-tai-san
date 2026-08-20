@@ -12,6 +12,7 @@ import {
   Megaphone,
   Globe,
   ExternalLink,
+  Map,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,6 +29,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 
 const items = [
   { title: "Tổng quan", url: "/", icon: LayoutDashboard },
+  { title: "Bản đồ tài sản", url: "/ban-do", icon: Map },
   { title: "Tài sản", url: "/tai-san", icon: Building2 },
   { title: "Hợp đồng", url: "/hop-dong", icon: FileText },
   { title: "Sổ đối tác", url: "/doi-tac", icon: Users },

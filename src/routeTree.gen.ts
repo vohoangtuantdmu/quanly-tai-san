@@ -19,6 +19,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
+import { Route as BanDoIndexRouteImport } from './routes/ban-do.index'
 import { Route as DoiTacIndexRouteImport } from './routes/doi-tac.index'
 import { Route as HopDongIndexRouteImport } from './routes/hop-dong.index'
 import { Route as HopDongIdRouteImport } from './routes/hop-dong.$id'
@@ -81,6 +82,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   id: '/admin/properties',
   path: '/admin/properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BanDoIndexRoute = BanDoIndexRouteImport.update({
+  id: '/ban-do/',
+  path: '/ban-do/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DoiTacIndexRoute = DoiTacIndexRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/tin-dang/$slug': typeof TinDangSlugRoute
+  '/ban-do/': typeof BanDoIndexRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
   '/nhac-lich/': typeof NhacLichIndexRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/tin-dang/$slug': typeof TinDangSlugRoute
+  '/ban-do': typeof BanDoIndexRoute
   '/doi-tac': typeof DoiTacIndexRoute
   '/hop-dong': typeof HopDongIndexRoute
   '/nhac-lich': typeof NhacLichIndexRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/tai-san/$id': typeof TaiSanIdRoute
   '/tai-san/moi': typeof TaiSanMoiRoute
   '/tin-dang/$slug': typeof TinDangSlugRoute
+  '/ban-do/': typeof BanDoIndexRoute
   '/doi-tac/': typeof DoiTacIndexRoute
   '/hop-dong/': typeof HopDongIndexRoute
   '/nhac-lich/': typeof NhacLichIndexRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/tai-san/$id'
     | '/tai-san/moi'
     | '/tin-dang/$slug'
+    | '/ban-do/'
     | '/doi-tac/'
     | '/hop-dong/'
     | '/nhac-lich/'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/tai-san/$id'
     | '/tai-san/moi'
     | '/tin-dang/$slug'
+    | '/ban-do'
     | '/doi-tac'
     | '/hop-dong'
     | '/nhac-lich'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/tai-san/$id'
     | '/tai-san/moi'
     | '/tin-dang/$slug'
+    | '/ban-do/'
     | '/doi-tac/'
     | '/hop-dong/'
     | '/nhac-lich/'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   TaiSanIdRoute: typeof TaiSanIdRoute
   TaiSanMoiRoute: typeof TaiSanMoiRoute
   TinDangSlugRoute: typeof TinDangSlugRoute
+  BanDoIndexRoute: typeof BanDoIndexRoute
   DoiTacIndexRoute: typeof DoiTacIndexRoute
   HopDongIndexRoute: typeof HopDongIndexRoute
   NhacLichIndexRoute: typeof NhacLichIndexRoute
@@ -399,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/properties'
       fullPath: '/admin/properties'
       preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ban-do/': {
+      id: '/ban-do/'
+      path: '/ban-do'
+      fullPath: '/ban-do/'
+      preLoaderRoute: typeof BanDoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/doi-tac/': {
@@ -511,6 +531,7 @@ const rootRouteChildren: RootRouteChildren = {
   TaiSanIdRoute: TaiSanIdRoute,
   TaiSanMoiRoute: TaiSanMoiRoute,
   TinDangSlugRoute: TinDangSlugRoute,
+  BanDoIndexRoute: BanDoIndexRoute,
   DoiTacIndexRoute: DoiTacIndexRoute,
   HopDongIndexRoute: HopDongIndexRoute,
   NhacLichIndexRoute: NhacLichIndexRoute,

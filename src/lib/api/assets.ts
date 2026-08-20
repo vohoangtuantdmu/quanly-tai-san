@@ -154,6 +154,18 @@ export interface AssetMediaItem {
   sortOrder: number;
 }
 
+// ---- Bản đồ tài sản ----
+/** Tài sản kèm toạ độ để vẽ pin. `latitude`/`longitude` null = chưa gắn vị trí. */
+export interface AssetMapItem extends AssetListItem {
+  latitude: number | null;
+  longitude: number | null;
+}
+
+/** Trần số tài sản lấy về cho bản đồ — thực tế danh mục cá nhân hiếm khi chạm tới. */
+const MAP_PIN_LIMIT = 200;
+/** Số request detail chạy song song tối đa, tránh dội server khi danh mục lớn. */
+const MAP_PIN_CONCURRENCY = 8;
+
 // ---- Giấy tờ ----
 export interface AssetDocumentDto {
   id: string;
@@ -283,6 +295,33 @@ export const assetsApi = {
     api<NearbyAsset[]>(
       `/assets/nearby${toQuery({ latitude: lat, longitude: lng, radiusMeters, limit })}`,
     ),
+
+  /**
+   * Danh sách tài sản kèm toạ độ, dùng cho dashboard bản đồ.
+   *
+   * ⚠️ TẠM GHÉP Ở CLIENT: `GET /assets` không trả toạ độ, chỉ `GET /assets/{id}` mới có
+   * `location` — nên phải gọi thêm detail cho từng tài sản. Khi backend bổ sung
+   * `GET /assets/map-pins`, chỉ cần thay thân hàm này bằng đúng 1 lời gọi
+   * `api<AssetMapItem[]>("/assets/map-pins")`; toàn bộ UI phía trên không phải sửa gì.
+   */
+  mapPins: async (): Promise<AssetMapItem[]> => {
+    const page = await api<PagedResult<AssetListItem>>(
+      `/assets${toQuery({ page: 1, pageSize: MAP_PIN_LIMIT })}`,
+    );
+    const out: AssetMapItem[] = [];
+    for (let i = 0; i < page.items.length; i += MAP_PIN_CONCURRENCY) {
+      const batch = page.items.slice(i, i + MAP_PIN_CONCURRENCY);
+      const details = await Promise.all(
+        // Một tài sản lỗi không được làm hỏng cả bản đồ — coi như chưa có toạ độ
+        batch.map((a) => api<AssetDetail>(`/assets/${a.id}`).catch(() => null)),
+      );
+      batch.forEach((a, k) => {
+        const loc = details[k]?.location ?? null;
+        out.push({ ...a, latitude: loc?.latitude ?? null, longitude: loc?.longitude ?? null });
+      });
+    }
+    return out;
+  },
 
   units: {
     list: (assetId: string) => api<AssetUnit[]>(`/assets/${assetId}/units`),
