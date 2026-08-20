@@ -1,6 +1,6 @@
 // Bản đồ danh mục tài sản cho dashboard — KHÁC PropertyMap (Marketplace) ở 3 điểm:
-// basemap Positron xám nhạt (để panel trắng nổi lên đọc được), pin hình giọt nước theo
-// trạng thái + loại tài sản, và gom cụm bằng leaflet.markercluster.
+// basemap Positron xám nhạt (để panel trắng nổi lên đọc được), marker "vòng giá trị" mã
+// hoá giá trị + trạng thái, và gom cụm bằng leaflet.markercluster.
 // Client-only, nạp qua React.lazy (xem AssetMapClient.tsx).
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -8,11 +8,15 @@ import L from "leaflet";
 // Kéo phần khai báo bổ sung cho namespace `L` (L.MarkerCluster, MarkerClusterGroupOptions).
 // react-leaflet-cluster đã nạp plugin này ở runtime; import lặp là idempotent.
 import "leaflet.markercluster";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
-import { useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AssetMapItem } from "@/lib/api/assets";
-import type { AssetStatusCode, AssetTypeCode } from "@/constants/enums";
+import type { AssetStatusCode } from "@/constants/enums";
+import type { PortfolioIncome } from "@/lib/asset-income";
+import { prefersReducedMotion } from "@/lib/motion";
+import { formatCurrency } from "@/lib/format";
+import { AssetQuickCard, QUICK_CARD_WIDTH } from "./AssetQuickCard";
 
 // Positron: tile gần như đơn sắc, không có đường đỏ/vàng gắt như OSM mặc định — đây là
 // điều kiện để panel trắng bán trong suốt đặt lên trên vẫn đọc rõ.
@@ -20,7 +24,6 @@ const POSITRON_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}
 const POSITRON_ATTRIB =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-// Tâm dự phòng khi chưa có tài sản nào có toạ độ (TP.HCM)
 const FALLBACK_CENTER: L.LatLngTuple = [10.7769, 106.7009];
 
 // Dùng token ngữ nghĩa sẵn có, không đặt bảng màu riêng cho bản đồ.
@@ -33,16 +36,13 @@ const STATUS_COLOR: Record<AssetStatusCode, string> = {
   6: "var(--color-destructive)", // Hết hạn thuê
 };
 
-// Glyph 24-viewBox theo loại tài sản, vẽ bên trong pin
-const TYPE_GLYPH: Record<AssetTypeCode, string> = {
-  1: '<path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>', // Nhà riêng
-  2: '<path d="M7 21V4h10v17"/><path d="M10 8h4M10 12h4M10 16h4"/>', // Căn hộ
-  3: '<path d="M3 8.5h18v8H3z"/><path d="M3 12.5h18"/>', // Đất
-  4: '<path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>', // Biệt thự
-  5: '<path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>', // Nhà mặt phố
-  6: '<path d="M7 21V4h10v17"/><path d="M10 8h4M10 12h4M10 16h4"/>', // Văn phòng
-  99: '<circle cx="12" cy="12" r="4"/>', // Khác
-};
+// Bán kính vòng ngoài: nhỏ nhất → lớn nhất trong CHÍNH danh mục đang xem
+const RING_MIN = 18;
+const RING_MAX = 40;
+/** Tài sản chưa nhập giá trị: vòng nhỏ nhất, và không tham gia tính min–max. */
+const RING_NO_VALUE = 18;
+/** Mọi tài sản cùng giá trị → không có thang so sánh, dùng cỡ trung bình cố định. */
+const RING_UNIFORM = 24;
 
 type LocatedAsset = AssetMapItem & { latitude: number; longitude: number };
 
@@ -50,31 +50,54 @@ function hasLocation(a: AssetMapItem): a is LocatedAsset {
   return a.latitude != null && a.longitude != null;
 }
 
-// Icon là bất biến theo (trạng thái, loại, đang nổi bật) — cache lại để đổi hover không
-// phải dựng lại DivIcon cho toàn bộ marker.
+/**
+ * Chuẩn hoá bán kính theo min–max của chính danh mục người dùng đang xem, không theo giá
+ * trị tuyệt đối: người chỉ có tài sản nhỏ vẫn phải thấy được cái nào lớn nhất của họ.
+ */
+function makeRingRadius(items: LocatedAsset[]): (value: number | null) => number {
+  const values = items.map((a) => a.currentValue).filter((v): v is number => v != null);
+  if (values.length === 0) return () => RING_NO_VALUE;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return (value) => {
+    if (value == null) return RING_NO_VALUE;
+    if (max === min) return RING_UNIFORM;
+    return RING_MIN + ((value - min) / (max - min)) * (RING_MAX - RING_MIN);
+  };
+}
+
+function ringInnerHtml(status: AssetStatusCode, radius: number, alive: boolean, active: boolean) {
+  const color = STATUS_COLOR[status] ?? STATUS_COLOR[4];
+  const size = radius * 2;
+  const cls = ["asset-ring", alive && "asset-ring--alive", active && "asset-ring--active"]
+    .filter(Boolean)
+    .join(" ");
+  return `<div class="${cls}" style="width:${size}px;height:${size}px;border-color:${color};background:color-mix(in oklab, ${color} 14%, transparent)"><i class="asset-ring__dot" style="background:${color}"></i></div>`;
+}
+
+// DivIcon bất biến theo (trạng thái, bán kính, thở, nổi bật) — cache để đổi hover không
+// phải dựng lại icon cho toàn bộ marker.
 const iconCache = new Map<string, L.DivIcon>();
 
-function pinIcon(status: AssetStatusCode, type: AssetTypeCode, active: boolean): L.DivIcon {
-  const key = `${status}|${type}|${active}`;
+/**
+ * Icon CỐ TÌNH không phụ thuộc trạng thái hover/chọn: đổi icon sẽ khiến react-leaflet gọi
+ * `setIcon()`, thay luôn phần tử DOM của marker và giết Tooltip đang mở. Việc làm nổi bật
+ * xử lý bằng cách bật/tắt class trên chính phần tử đó (xem HighlightMarkers).
+ */
+function ringIcon(status: AssetStatusCode, radius: number, alive: boolean): L.DivIcon {
+  // Gom bán kính về bội số 2px: giữ cache nhỏ mà mắt thường không phân biệt được
+  const r = Math.max(RING_MIN, Math.round(radius / 2) * 2);
+  const key = `${status}|${r}|${alive}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
-  const color = STATUS_COLOR[status] ?? STATUS_COLOR[4];
-  const glyph = TYPE_GLYPH[type] ?? TYPE_GLYPH[99];
-  const html = `<svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M16 1C7.716 1 1 7.716 1 16c0 9.9 15 23 15 23s15-13.1 15-23c0-8.284-6.716-15-15-15z"
-            fill="white" stroke="${color}" stroke-width="2"/>
-      <g transform="translate(9 8) scale(0.583)" fill="none" stroke="${color}"
-         stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${glyph}</g>
-    </svg>`;
-
-  // className mang mã trạng thái để iconCreateFunction đọc lại được khi tô màu cụm —
-  // Leaflet MarkerOptions không có chỗ gắn dữ liệu tuỳ ý nên đây là đường ngắn nhất.
   const icon = L.divIcon({
-    html,
-    className: `asset-pin asset-pin--s${status}${active ? " asset-pin--active" : ""}`,
-    iconSize: [32, 40],
-    iconAnchor: [16, 40],
+    html: ringInnerHtml(status, r, alive, false),
+    // className mang mã trạng thái để iconCreateFunction đọc lại khi tô màu cụm —
+    // Leaflet MarkerOptions không có chỗ gắn dữ liệu tuỳ ý.
+    className: `asset-ring-wrap asset-ring--s${status}`,
+    iconSize: [r * 2, r * 2],
+    iconAnchor: [r, r],
   });
   iconCache.set(key, icon);
   return icon;
@@ -86,7 +109,7 @@ function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   const tally = new Map<number, number>();
   for (const m of cluster.getAllChildMarkers()) {
     const cls = (m.options.icon?.options as L.DivIconOptions | undefined)?.className ?? "";
-    const code = Number(/asset-pin--s(\d+)/.exec(cls)?.[1]);
+    const code = Number(/asset-ring--s(\d+)/.exec(cls)?.[1]);
     if (Number.isFinite(code)) tally.set(code, (tally.get(code) ?? 0) + 1);
   }
   let top = 4;
@@ -108,15 +131,9 @@ function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   });
 }
 
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
 /**
  * Khung nhìn ban đầu vừa đủ bao trọn tài sản đang có (không phải toàn Việt Nam trống
- * trải). Chừa lề phải rộng hơn để pin không nằm khuất dưới panel danh sách.
+ * trải). Chừa lề phải rộng hơn để marker không nằm khuất dưới panel danh sách.
  */
 function FitToAssets({ items, rightInset }: { items: LocatedAsset[]; rightInset: number }) {
   const map = useMap();
@@ -139,13 +156,17 @@ function FitToAssets({ items, rightInset }: { items: LocatedAsset[]; rightInset:
   return null;
 }
 
-/** Chọn tài sản từ panel danh sách → đưa pin tương ứng vào tầm nhìn. */
+/** Chọn tài sản từ panel danh sách → đưa marker tương ứng vào tầm nhìn. */
 function PanToSelected({ target }: { target: LocatedAsset | null }) {
   const map = useMap();
   const lastId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!target || lastId.current === target.id) return;
+    if (!target) {
+      lastId.current = null;
+      return;
+    }
+    if (lastId.current === target.id) return;
     lastId.current = target.id;
     map.setView([target.latitude, target.longitude], Math.max(map.getZoom(), 13), {
       animate: !prefersReducedMotion(),
@@ -155,13 +176,180 @@ function PanToSelected({ target }: { target: LocatedAsset | null }) {
   return null;
 }
 
+const CARD_GAP = 16;
+const CARD_EDGE = 8;
+/** Chiều cao ước lượng để căn chỗ; card thật có thể thấp hơn, không ảnh hưởng thẩm mỹ. */
+const CARD_EST_HEIGHT = 360;
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
+
+/**
+ * Lớp "spotlight": làm tối nền bản đồ, vẽ lại marker đang chọn ở trên lớp tối, và mở card
+ * ngay tại điểm vừa click.
+ *
+ * Vì sao phải vẽ LẠI marker thay vì nâng z-index marker gốc: marker nằm trong
+ * `.leaflet-marker-pane` (position:absolute + z-index:600) — pane đó tự tạo stacking
+ * context, nên không con nào bên trong vượt lên trên lớp tối đặt ngoài pane được.
+ */
+function SelectionLayer({
+  target,
+  radius,
+  alive,
+  income,
+  onClose,
+  rightInset,
+}: {
+  target: LocatedAsset;
+  radius: number;
+  alive: boolean;
+  income: PortfolioIncome;
+  onClose: () => void;
+  rightInset: number;
+}) {
+  const map = useMap();
+  const read = useCallback(
+    () => ({
+      pt: map.latLngToContainerPoint([target.latitude, target.longitude]),
+      size: map.getSize(),
+    }),
+    [map, target.latitude, target.longitude],
+  );
+  const [geo, setGeo] = useState(read);
+
+  // Card neo theo marker: pan/zoom thì đi theo, không bị "rớt" lại một chỗ
+  const sync = useCallback(() => setGeo(read()), [read]);
+  useEffect(() => sync(), [sync]);
+  useMapEvents({ move: sync, zoom: sync, resize: sync });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const { pt, size } = geo;
+
+  // Chọn phía còn nhiều chỗ nhất, rồi kẹp lại trong viewport — cùng cách đã dùng để sửa
+  // popover "Tìm quanh vị trí" ở Marketplace.
+  const usableRight =
+    size.x - rightInset > QUICK_CARD_WIDTH + CARD_GAP * 2 ? size.x - rightInset : size.x;
+  const spaceRight = usableRight - pt.x;
+  const spaceLeft = pt.x;
+  let left =
+    spaceRight >= QUICK_CARD_WIDTH + CARD_GAP || spaceRight >= spaceLeft
+      ? pt.x + radius + CARD_GAP
+      : pt.x - radius - CARD_GAP - QUICK_CARD_WIDTH;
+  left = clamp(left, CARD_EDGE, usableRight - QUICK_CARD_WIDTH - CARD_EDGE);
+
+  let top = pt.y - CARD_EST_HEIGHT / 2;
+  top = clamp(top, CARD_EDGE, size.y - CARD_EST_HEIGHT - CARD_EDGE);
+
+  // Gốc phóng nằm đúng phía marker → card "nở ra" từ điểm vừa click
+  const originX = clamp(pt.x - left, 0, QUICK_CARD_WIDTH);
+  const originY = clamp(pt.y - top, 0, CARD_EST_HEIGHT);
+
+  return (
+    <>
+      <div className="asset-spotlight" onClick={onClose} role="presentation" aria-hidden="true" />
+      {/* Bản sao sáng của marker đang chọn, nằm trên lớp tối */}
+      <div
+        className="asset-selected-ring"
+        style={{ left: pt.x - radius, top: pt.y - radius }}
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{
+          __html: ringInnerHtml(target.status, radius, alive, true),
+        }}
+      />
+      <div
+        className="asset-quickcard"
+        style={{
+          left,
+          top,
+          width: QUICK_CARD_WIDTH,
+          transformOrigin: `${originX}px ${originY}px`,
+        }}
+      >
+        <AssetQuickCard asset={target} income={income[target.id]} onClose={onClose} />
+      </div>
+    </>
+  );
+}
+
+/**
+ * Một marker + tooltip xem nhanh. Memo hoá và giữ MỌI prop truyền xuống Leaflet ổn định
+ * (icon, offset, eventHandlers): chỉ cần một prop đổi identity mỗi lần render là
+ * react-leaflet sẽ dựng lại Tooltip, làm nó biến mất ngay khi vừa hiện.
+ */
+const AssetMarker = memo(function AssetMarker({
+  asset,
+  radius,
+  alive,
+  onHover,
+  onSelect,
+  registerMarker,
+}: {
+  asset: LocatedAsset;
+  radius: number;
+  alive: boolean;
+  onHover: (id: string | null) => void;
+  onSelect: (id: string) => void;
+  registerMarker: (id: string, marker: L.Marker | null) => void;
+}) {
+  const position = useMemo<L.LatLngTuple>(
+    () => [asset.latitude, asset.longitude],
+    [asset.latitude, asset.longitude],
+  );
+  const offset = useMemo<L.PointTuple>(() => [0, -radius], [radius]);
+  const icon = useMemo(() => ringIcon(asset.status, radius, alive), [asset.status, radius, alive]);
+  const setRef = useCallback(
+    (m: L.Marker | null) => registerMarker(asset.id, m),
+    [asset.id, registerMarker],
+  );
+  const eventHandlers = useMemo(
+    () => ({
+      mouseover: () => onHover(asset.id),
+      mouseout: () => onHover(null),
+      click: () => onSelect(asset.id),
+      keypress: (e: L.LeafletKeyboardEvent) => {
+        if (e.originalEvent.key === "Enter") onSelect(asset.id);
+      },
+    }),
+    [asset.id, onHover, onSelect],
+  );
+
+  return (
+    <Marker
+      ref={setRef}
+      position={position}
+      icon={icon}
+      alt={asset.name}
+      eventHandlers={eventHandlers}
+    >
+      {/* Xem nhanh khi rê chuột — không delay, để "lướt" cả danh mục mà không phải click từng cái */}
+      <Tooltip direction="top" offset={offset} opacity={1} className="asset-tooltip">
+        <span className="font-medium">{asset.name}</span>
+        {asset.currentValue != null && (
+          <span className="text-muted-foreground">
+            {" · "}
+            {formatCurrency(asset.currentValue, { compact: true })}
+          </span>
+        )}
+      </Tooltip>
+    </Marker>
+  );
+});
+
 export interface AssetMapProps {
   items: AssetMapItem[];
   hoveredId: string | null;
   selectedId: string | null;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
-  /** Bề rộng vùng bị panel che ở mép phải, để căn khung nhìn ban đầu cho đúng. */
+  onCloseSelection: () => void;
+  income: PortfolioIncome;
+  /** Bề rộng vùng bị panel che ở mép phải, để căn khung nhìn và vị trí card cho đúng. */
   rightInset?: number;
 }
 
@@ -171,10 +359,28 @@ export default function AssetMap({
   selectedId,
   onHover,
   onSelect,
+  onCloseSelection,
+  income,
   rightInset = 380,
 }: AssetMapProps) {
   const located = items.filter(hasLocation);
+  const radiusOf = makeRingRadius(located);
   const selected = located.find((a) => a.id === selectedId) ?? null;
+  const isAlive = (id: string) => income[id]?.hasRecentIncome === true;
+
+  // Làm nổi bật bằng class trên phần tử marker sẵn có, KHÔNG đổi icon (xem ghi chú ở
+  // ringIcon). getElement() trả null khi marker đang bị gom vào cụm — bỏ qua là đúng.
+  const markerRefs = useRef<Record<string, L.Marker | null>>({});
+  const registerMarker = useCallback((id: string, marker: L.Marker | null) => {
+    markerRefs.current[id] = marker;
+  }, []);
+  useEffect(() => {
+    for (const [id, marker] of Object.entries(markerRefs.current)) {
+      marker
+        ?.getElement()
+        ?.classList.toggle("asset-ring-wrap--active", id === hoveredId || id === selectedId);
+    }
+  }, [hoveredId, selectedId, items]);
 
   return (
     <MapContainer
@@ -195,22 +401,28 @@ export default function AssetMap({
         iconCreateFunction={clusterIcon}
       >
         {located.map((a) => (
-          <Marker
+          <AssetMarker
             key={a.id}
-            position={[a.latitude, a.longitude]}
-            icon={pinIcon(a.status, a.type, a.id === hoveredId || a.id === selectedId)}
-            alt={a.name}
-            eventHandlers={{
-              mouseover: () => onHover(a.id),
-              mouseout: () => onHover(null),
-              click: () => onSelect(a.id),
-              keypress: (e) => {
-                if ((e.originalEvent as KeyboardEvent).key === "Enter") onSelect(a.id);
-              },
-            }}
+            asset={a}
+            radius={radiusOf(a.currentValue)}
+            alive={isAlive(a.id)}
+            onHover={onHover}
+            onSelect={onSelect}
+            registerMarker={registerMarker}
           />
         ))}
       </MarkerClusterGroup>
+
+      {selected && (
+        <SelectionLayer
+          target={selected}
+          radius={Math.max(RING_MIN, Math.round(radiusOf(selected.currentValue) / 2) * 2)}
+          alive={isAlive(selected.id)}
+          income={income}
+          onClose={onCloseSelection}
+          rightInset={rightInset}
+        />
+      )}
     </MapContainer>
   );
 }

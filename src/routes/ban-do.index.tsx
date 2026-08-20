@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { assetsApi } from "@/lib/api/assets";
+import { fetchPortfolioIncome } from "@/lib/asset-income";
 import { getErrorMessage } from "@/lib/api/errors";
 import { AssetMapClient } from "@/components/map/AssetMapClient";
 import { AssetMapListPanel } from "@/components/dashboard/AssetMapListPanel";
@@ -27,12 +28,26 @@ function AssetMapDashboard() {
     queryFn: () => assetsApi.mapPins(),
   });
 
+  // Thu nhập theo tháng của cả danh mục — quyết định marker nào "thở" và số liệu
+  // sparkline trong card. Lỗi ở đây không được làm hỏng bản đồ, nên chỉ coi như rỗng.
+  const incomeQ = useQuery({
+    queryKey: ["portfolio-income"],
+    queryFn: fetchPortfolioIncome,
+    retry: 1,
+  });
+
   const handleHover = useCallback((id: string | null) => setHoveredId(id), []);
   const handleSelect = useCallback((id: string) => setSelectedId(id), []);
   const closeDetail = useCallback(() => setSelectedId(null), []);
 
   const items = q.data ?? [];
   const isEmpty = !q.isLoading && !q.isError && items.length === 0;
+
+  // Tài sản chưa có toạ độ thì không có marker để neo card "mở tại chỗ" — vẫn phải xem
+  // được, nên giữ panel chi tiết ở cột phải cho riêng trường hợp này.
+  const selected = items.find((a) => a.id === selectedId) ?? null;
+  const selectedHasNoLocation =
+    selected != null && (selected.latitude == null || selected.longitude == null);
 
   return (
     // Không dùng `fixed inset-0` như bản tham khảo: trang này nằm trong app shell (sidebar
@@ -48,6 +63,8 @@ function AssetMapDashboard() {
           selectedId={selectedId}
           onHover={handleHover}
           onSelect={handleSelect}
+          onCloseSelection={closeDetail}
+          income={incomeQ.data ?? {}}
           rightInset={PANEL_INSET}
         />
       </div>
@@ -81,7 +98,7 @@ function AssetMapDashboard() {
           className="absolute top-5 right-5 bottom-5 z-10 max-w-[calc(100%-2.5rem)]"
           style={{ width: PANEL_WIDTH }}
         >
-          {selectedId ? (
+          {selectedHasNoLocation && selectedId ? (
             <AssetDetailPanel assetId={selectedId} onClose={closeDetail} />
           ) : (
             <AssetMapListPanel
