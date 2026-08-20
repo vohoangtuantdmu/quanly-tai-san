@@ -172,3 +172,92 @@
 .animate-heart-pop {
   animation: heart-pop 200ms ease-out;
 }
+
+/* ---- Dashboard bản đồ tài sản ---- */
+
+/* Panel nổi trên nền bản đồ. Đổ bóng 2 lớp (không dùng 1 lớp đậm) để panel "nhấc" khỏi
+   nền mà vẫn nhẹ; viền sáng 1px tách panel khỏi tile bên dưới. */
+.map-panel {
+  background: color-mix(in oklab, var(--color-card) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, #fff 60%, transparent);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.06),
+    0 12px 32px rgb(16 24 40 / 0.1);
+}
+.dark .map-panel {
+  border-color: color-mix(in oklab, #fff 12%, transparent);
+}
+
+@keyframes map-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .map-panel-enter {
+    animation: map-panel-in 200ms ease-out;
+  }
+}
+
+/* ---- Pin + cụm (L.divIcon) ---- */
+
+/* Bỏ nền/viền vuông mặc định của Leaflet để lộ đúng hình giọt nước tự vẽ */
+.leaflet-div-icon.asset-pin,
+.leaflet-div-icon.asset-cluster-wrap {
+  background: transparent;
+  border: none;
+}
+.leaflet-div-icon.asset-pin {
+  cursor: pointer;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 1px 2px rgb(16 24 40 / 0.24));
+}
+.leaflet-div-icon.asset-pin:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Nổi bật khi hover trên bản đồ HOẶC hover card tương ứng ở panel danh sách */
+.leaflet-div-icon.asset-pin:hover,
+.leaflet-div-icon.asset-pin--active {
+  transform: scale(1.12);
+  filter: drop-shadow(0 4px 8px rgb(16 24 40 / 0.32));
+  z-index: 1000 !important;
+}
+
+.asset-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #fff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border: 2px solid rgb(255 255 255 / 0.9);
+  cursor: pointer;
+}
+.leaflet-div-icon.asset-cluster-wrap:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 4px;
+  border-radius: 9999px;
+}
+
+/* Chuyển động chỉ bật khi người dùng không yêu cầu giảm hiệu ứng */
+@media (prefers-reduced-motion: no-preference) {
+  .leaflet-div-icon.asset-pin {
+    transition:
+      transform 150ms ease-out,
+      filter 150ms ease-out;
+  }
+  .asset-cluster {
+    transition: box-shadow 150ms ease-out;
+  }
+}
