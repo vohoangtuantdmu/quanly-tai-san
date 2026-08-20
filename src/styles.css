@@ -207,30 +207,78 @@
   }
 }
 
-/* ---- Pin + cụm (L.divIcon) ---- */
+/* ---- Marker "vòng giá trị" + cụm (L.divIcon) ---- */
 
-/* Bỏ nền/viền vuông mặc định của Leaflet để lộ đúng hình giọt nước tự vẽ */
-.leaflet-div-icon.asset-pin,
+/* Bỏ nền/viền vuông mặc định của Leaflet để lộ đúng hình vòng tự vẽ */
+.leaflet-div-icon.asset-ring-wrap,
 .leaflet-div-icon.asset-cluster-wrap {
   background: transparent;
   border: none;
 }
-.leaflet-div-icon.asset-pin {
+.leaflet-div-icon.asset-ring-wrap {
   cursor: pointer;
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 1px 2px rgb(16 24 40 / 0.24));
 }
-.leaflet-div-icon.asset-pin:focus-visible {
+.leaflet-div-icon.asset-ring-wrap:focus-visible {
   outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline-offset: 3px;
+  border-radius: 9999px;
 }
-/* Nổi bật khi hover trên bản đồ HOẶC hover card tương ứng ở panel danh sách */
-.leaflet-div-icon.asset-pin:hover,
-.leaflet-div-icon.asset-pin--active {
-  transform: scale(1.12);
-  filter: drop-shadow(0 4px 8px rgb(16 24 40 / 0.32));
-  z-index: 1000 !important;
+
+/* Vòng ngoài: bán kính tỷ lệ theo giá trị. Chấm trong: màu theo trạng thái. */
+.asset-ring {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 2px solid;
+  filter: drop-shadow(0 1px 2px rgb(16 24 40 / 0.18));
+}
+.asset-ring__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.9);
+}
+/* Nổi bật khi hover trên bản đồ, hover card tương ứng ở panel danh sách, hoặc đang chọn */
+.leaflet-div-icon.asset-ring-wrap:hover .asset-ring,
+.leaflet-div-icon.asset-ring-wrap--active .asset-ring,
+.asset-ring--active {
+  filter: drop-shadow(0 4px 10px rgb(16 24 40 / 0.3));
+  border-width: 3px;
+}
+
+/* Tooltip xem nhanh khi rê chuột — Leaflet không delay sẵn, giữ nguyên */
+.leaflet-tooltip.asset-tooltip {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+  box-shadow: 0 4px 12px rgb(16 24 40 / 0.14);
+  font-size: 12px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.leaflet-tooltip.asset-tooltip::before {
+  display: none;
+}
+
+/* Spotlight: chỉ phủ tối vùng bản đồ. Panel/điều khiển ngoài bản đồ nằm ở stacking
+   context khác nên vẫn sáng và bấm được bình thường. */
+.asset-spotlight {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.25);
+  z-index: 998;
+}
+.asset-selected-ring {
+  position: absolute;
+  z-index: 999;
+  pointer-events: none;
+}
+.asset-quickcard {
+  position: absolute;
+  z-index: 1000;
 }
 
 .asset-cluster {
@@ -250,14 +298,55 @@
   border-radius: 9999px;
 }
 
+/* Marker "thở" — chỉ cho tài sản còn thu nhập gần đây. Biên độ cố tình rất nhỏ:
+   mục đích là cảm giác có sức sống, không phải hiệu ứng gây chú ý. */
+@keyframes asset-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+/* Card "nở ra" từ đúng điểm vừa click (transform-origin đặt inline theo vị trí marker) */
+@keyframes asset-card-expand {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes asset-card-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mặc định (kể cả khi giảm chuyển động): card chỉ fade, marker đứng yên */
+.asset-quickcard {
+  animation: asset-card-fade 140ms ease-out both;
+}
+
 /* Chuyển động chỉ bật khi người dùng không yêu cầu giảm hiệu ứng */
 @media (prefers-reduced-motion: no-preference) {
-  .leaflet-div-icon.asset-pin {
-    transition:
-      transform 150ms ease-out,
-      filter 150ms ease-out;
+  .asset-ring {
+    transition: filter 150ms ease-out;
+  }
+  .asset-ring--alive {
+    animation: asset-breathe 3s ease-in-out infinite;
   }
   .asset-cluster {
     transition: box-shadow 150ms ease-out;
+  }
+  .asset-quickcard {
+    animation: asset-card-expand 260ms cubic-bezier(0.34, 1.2, 0.64, 1) both;
   }
 }
