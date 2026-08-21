@@ -5,8 +5,19 @@ import type { ExpiringContract } from "@/lib/api/contracts";
 import type { PortfolioIncome } from "@/lib/asset-income";
 import { INCOME_MONTHS } from "@/lib/asset-income";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Wallet, Home, Bell, X, LayoutPanelLeft } from "lucide-react";
+import { QuickRenewDialog } from "@/components/contracts/QuickRenewDialog";
+import { CONTRACT_DIRECTION } from "@/constants/enums";
+import { Wallet, Home, Bell, X, LayoutPanelLeft, RefreshCw, ArrowRight } from "lucide-react";
+
+/** Càng gần hết hạn càng gắt — giữ đúng thang màu vốn dùng ở trang Tổng quan cũ. */
+function daysLeftClass(d: number): string {
+  if (d <= 7) return "bg-destructive/15 text-destructive border-destructive/30";
+  if (d <= 15) return "bg-warning/25 text-warning-foreground border-warning/40";
+  return "bg-warning/10 text-warning-foreground border-warning/30";
+}
 
 const STORAGE_KEY = "ban-do:panels-hidden";
 
@@ -92,13 +103,21 @@ export interface MapStatPanelsProps {
   items: AssetMapItem[];
   income: PortfolioIncome;
   expiring: ExpiringContract[];
+  activeContracts: number | null;
   loading: boolean;
 }
 
-export function MapStatPanels({ items, income, expiring, loading }: MapStatPanelsProps) {
+export function MapStatPanels({
+  items,
+  income,
+  expiring,
+  activeContracts,
+  loading,
+}: MapStatPanelsProps) {
   // Luôn khởi tạo rỗng để khớp SSR, đọc localStorage sau khi mount (tránh hydration mismatch)
   const [hidden, setHidden] = useState<PanelId[]>([]);
   useEffect(() => setHidden(loadHidden()), []);
+  const [renewTarget, setRenewTarget] = useState<ExpiringContract | null>(null);
 
   const hide = (id: PanelId) => {
     const next = [...hidden, id];
@@ -158,6 +177,11 @@ export function MapStatPanels({ items, income, expiring, loading }: MapStatPanel
             {items.length} tài sản
             <span className="text-muted-foreground"> · {rented} thuê</span>
           </div>
+          {activeContracts != null && (
+            <div className="truncate text-[11px] text-muted-foreground tabular-nums">
+              {activeContracts} hợp đồng đang hiệu lực
+            </div>
+          )}
         </Shell>
       )}
 
@@ -175,31 +199,64 @@ export function MapStatPanels({ items, income, expiring, loading }: MapStatPanel
                   {expiring.length} hợp đồng sắp hết hạn
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-72 p-2">
-                <ul className="space-y-1">
-                  {expiring.slice(0, 6).map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        to="/hop-dong/$id"
-                        params={{ id: c.id }}
-                        className="block rounded-md px-2 py-1.5 transition-colors hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                      >
-                        <div className="truncate text-xs font-medium">{c.assetName}</div>
-                        <div className="flex justify-between gap-2 text-[11px] text-muted-foreground">
-                          <span className="truncate">{c.counterpartyName}</span>
-                          <span className="shrink-0 tabular-nums">
-                            {formatDate(c.endDate)} · còn {c.daysLeft}d
-                          </span>
+              {/* Popover này thay hẳn khối "Hợp đồng sắp hết hạn" của trang Tổng quan cũ
+                  nên phải giữ đủ: thang màu theo số ngày còn lại + gia hạn nhanh. */}
+              <PopoverContent align="start" className="w-[360px] p-2">
+                <ul className="max-h-[320px] space-y-1 overflow-y-auto">
+                  {expiring.map((c) => (
+                    <li key={c.id} className="rounded-md border p-2">
+                      <div className="flex items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            to="/hop-dong/$id"
+                            params={{ id: c.id }}
+                            className="block truncate text-xs font-medium hover:underline"
+                          >
+                            {c.assetName}
+                            {c.assetUnitName && (
+                              <span className="text-muted-foreground"> · {c.assetUnitName}</span>
+                            )}
+                          </Link>
+                          <div className="truncate text-[11px] text-muted-foreground">
+                            {CONTRACT_DIRECTION[c.direction]} · {c.counterpartyName} · Hết hạn{" "}
+                            {formatDate(c.endDate)}
+                          </div>
                         </div>
-                      </Link>
+                        <Badge
+                          variant="outline"
+                          className={`shrink-0 px-1.5 py-0 text-[11px] ${daysLeftClass(c.daysLeft)}`}
+                        >
+                          Còn {c.daysLeft} ngày
+                        </Badge>
+                      </div>
+                      <div className="mt-1.5 flex justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => setRenewTarget(c)}
+                        >
+                          <RefreshCw className="mr-1.5 h-3 w-3" />
+                          Gia hạn
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
+                <Link
+                  to="/hop-dong"
+                  className="mt-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-primary hover:bg-accent"
+                >
+                  Xem tất cả hợp đồng
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </PopoverContent>
             </Popover>
           )}
         </Shell>
       )}
+
+      <QuickRenewDialog target={renewTarget} onOpenChange={(v) => !v && setRenewTarget(null)} />
     </div>
   );
 }

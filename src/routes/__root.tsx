@@ -34,10 +34,10 @@ function NotFoundComponent() {
         </p>
         <div className="mt-6">
           <Link
-            to="/"
+            to="/ban-do"
             className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Về trang tổng quan
+            Về bản đồ tài sản
           </Link>
         </div>
       </div>

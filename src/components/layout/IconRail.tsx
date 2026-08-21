@@ -1,7 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Map as MapIcon,
-  LayoutDashboard,
   Building2,
   FileText,
   Users,
@@ -19,9 +18,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 export const RAIL_WIDTH = 72;
 
+// "Tổng quan" đã gộp vào Bản đồ tài sản — "/" giờ chỉ redirect, không còn mục riêng.
 const ITEMS = [
   { title: "Bản đồ tài sản", url: "/ban-do", icon: MapIcon },
-  { title: "Tổng quan", url: "/", icon: LayoutDashboard },
   { title: "Tài sản", url: "/tai-san", icon: Building2 },
   { title: "Hợp đồng", url: "/hop-dong", icon: FileText },
   { title: "Sổ đối tác", url: "/doi-tac", icon: Users },
