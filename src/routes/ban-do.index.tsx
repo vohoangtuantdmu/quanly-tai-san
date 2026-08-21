@@ -45,6 +45,13 @@ function AssetMapDashboard() {
     retry: 1,
   });
 
+  // Chỉ cần con số tổng — lấy pageSize 1 cho nhẹ. Trước đây là 1 thẻ ở trang Tổng quan.
+  const activeContractsQ = useQuery({
+    queryKey: ["contracts", { status: 2, page: 1, pageSize: 1 }],
+    queryFn: () => contractsApi.list({ status: 2, page: 1, pageSize: 1 }),
+    retry: 1,
+  });
+
   const handleHover = useCallback((id: string | null) => setHoveredId(id), []);
   const handleSelect = useCallback((id: string) => setSelectedId(id), []);
   const closeDetail = useCallback(() => setSelectedId(null), []);
@@ -122,6 +129,7 @@ function AssetMapDashboard() {
             items={items}
             income={incomeQ.data ?? {}}
             expiring={expiringQ.data ?? []}
+            activeContracts={activeContractsQ.data?.totalCount ?? null}
             loading={q.isLoading}
           />
         </div>
