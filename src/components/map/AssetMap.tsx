@@ -38,7 +38,7 @@ const STATUS_COLOR: Record<AssetStatusCode, string> = {
 
 // Bán kính vòng ngoài: nhỏ nhất → lớn nhất trong CHÍNH danh mục đang xem
 const RING_MIN = 18;
-const RING_MAX = 40;
+const RING_MAX = 48;
 /** Tài sản chưa nhập giá trị: vòng nhỏ nhất, và không tham gia tính min–max. */
 const RING_NO_VALUE = 18;
 /** Mọi tài sản cùng giá trị → không có thang so sánh, dùng cỡ trung bình cố định. */

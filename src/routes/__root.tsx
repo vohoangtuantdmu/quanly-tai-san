@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -17,10 +17,11 @@ import { AuthProvider } from "@/lib/auth/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { EmailNotConfirmedBanner } from "@/components/auth/EmailNotConfirmedBanner";
 import { UserMenu } from "@/components/layout/UserMenu";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { IconRail } from "@/components/layout/IconRail";
 import { Toaster } from "@/components/ui/sonner";
 import { isPublicPath } from "@/lib/publicPaths";
+import { PanelLeftOpen } from "lucide-react";
+import { RailContext } from "@/components/layout/RailContext";
 
 function NotFoundComponent() {
   return (
@@ -158,29 +159,78 @@ function RootComponent() {
   );
 }
 
+/** Route mà bản đồ phải chiếm trọn viewport — rail thu gọn, không header, không banner. */
+const MAP_PATH = "/ban-do";
+
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isMapPage = pathname === MAP_PATH || pathname === MAP_PATH + "/";
+
+  // Rail mặc định ẨN ở màn Bản đồ, HIỆN ở mọi trang khác. Đặt lại theo route mỗi lần
+  // chuyển trang: rời bản đồ là rail cố định tự trở lại, người dùng không phải tự bật.
+  const [railOpen, setRailOpen] = useState(!isMapPage);
+  useEffect(() => setRailOpen(!isMapPage), [isMapPage]);
+  const railApi = useMemo(() => ({ openRail: () => setRailOpen(true) }), []);
+
   if (isPublicPath(pathname)) {
     return <Outlet />;
   }
+
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
-        <div className="flex flex-1 flex-col min-w-0">
-          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/80 backdrop-blur px-4">
-            <SidebarTrigger />
-            <div className="flex-1 text-sm text-muted-foreground">Nền tảng Quản Lý Tài Sản</div>
-            <UserMenu />
-          </header>
-          <EmailNotConfirmedBanner />
-          <main className="flex-1 min-w-0">
+    <div className="flex min-h-screen w-full bg-background">
+      {/* Trang thường: rail chiếm chỗ cố định. Màn bản đồ: rail là lớp phủ tạm thời để
+          bản đồ vẫn giữ trọn chiều rộng. */}
+      {railOpen && !isMapPage && (
+        <IconRail variant="static" onCollapse={() => setRailOpen(false)} />
+      )}
+
+      {isMapPage && railOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Đóng thanh điều hướng"
+            className="fixed inset-0 z-[1200] bg-black/20"
+            onClick={() => setRailOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 z-[1201]">
+            <IconRail
+              variant="overlay"
+              onCollapse={() => setRailOpen(false)}
+              onNavigate={() => setRailOpen(false)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Rail đang thu: nút tròn nhỏ để mở lại. Ở màn bản đồ, nút ☰ nằm trên thanh nổi
+          của chính trang đó nên không cần nút này. */}
+      {!railOpen && !isMapPage && (
+        <button
+          type="button"
+          onClick={() => setRailOpen(true)}
+          aria-label="Mở thanh điều hướng"
+          className="fixed top-3 left-3 z-40 flex h-9 w-9 items-center justify-center rounded-full border bg-card/90 shadow-md backdrop-blur transition-colors hover:bg-card focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      )}
+
+      <RailContext.Provider value={railApi}>
+        <div className="flex min-w-0 flex-1 flex-col">
+          {!isMapPage && (
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/80 px-4 backdrop-blur">
+              <div className="flex-1 text-sm text-muted-foreground">Nền tảng Quản Lý Tài Sản</div>
+              <UserMenu />
+            </header>
+          )}
+          {!isMapPage && <EmailNotConfirmedBanner />}
+          <main className={isMapPage ? "h-screen min-w-0" : "min-w-0 flex-1"}>
             <ProtectedRoute>
               <Outlet />
             </ProtectedRoute>
           </main>
         </div>
-      </div>
-    </SidebarProvider>
+      </RailContext.Provider>
+    </div>
   );
 }

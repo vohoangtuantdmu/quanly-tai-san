@@ -173,6 +173,83 @@
   animation: heart-pop 200ms ease-out;
 }
 
+/* ---- Icon rail điều hướng (72px, navy) ---- */
+.icon-rail {
+  background: #1e2761;
+  color: rgb(255 255 255 / 0.75);
+}
+.icon-rail--overlay {
+  height: 100%;
+  box-shadow: 0 8px 40px rgb(16 24 40 / 0.28);
+}
+.icon-rail__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  color: rgb(255 255 255 / 0.75);
+  cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.icon-rail__item:hover {
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+.icon-rail__item:focus-visible {
+  outline: 2px solid #f2a93b;
+  outline-offset: 2px;
+}
+/* Amber nhấn — dùng đúng màu của Vòng Giá trị, không đặt màu khác */
+.icon-rail__item--active {
+  background: rgb(242 169 59 / 0.15);
+  border-color: #f2a93b;
+  color: #f2a93b;
+}
+.icon-rail__item--active:hover {
+  background: rgb(242 169 59 / 0.22);
+  color: #f2a93b;
+}
+
+/* ---- Thanh nổi trên cùng của trang Bản đồ ---- */
+.map-topbar {
+  background: color-mix(in oklab, var(--color-card) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, #fff 60%, transparent);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.06),
+    0 12px 32px rgb(16 24 40 / 0.1);
+}
+.dark .map-topbar {
+  border-color: color-mix(in oklab, #fff 12%, transparent);
+}
+
+/* Panel thống kê: bo 14px theo spec, giữ nội dung không tràn khỏi trần 80px */
+.map-stat-panel {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .asset-list-overlay {
+    animation: map-overlay-in 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+}
+@keyframes map-overlay-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ---- Dashboard bản đồ tài sản ---- */
 
 /* Panel nổi trên nền bản đồ. Đổ bóng 2 lớp (không dùng 1 lớp đậm) để panel "nhấc" khỏi
