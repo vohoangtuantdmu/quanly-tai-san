@@ -13,6 +13,9 @@ export function useCountUp(target: number, duration = 500): number {
       setValue(target);
       return;
     }
+    // Reset TRƯỚC khi đếm lại: card không unmount khi đổi marker, thiếu dòng này thì
+    // giá trị cũ đứng nguyên tới khung hình đầu tiên rồi mới nhảy — mất hẳn cảm giác đếm.
+    setValue(0);
     let raf = 0;
     const start = performance.now();
     const tick = (now: number) => {
