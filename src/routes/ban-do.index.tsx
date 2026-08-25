@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { assetsApi } from "@/lib/api/assets";
 import { contractsApi } from "@/lib/api/contracts";
 import { fetchPortfolioIncome } from "@/lib/asset-income";
@@ -39,7 +39,15 @@ function AssetMapDashboard() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [listOpen, setListOpen] = useState(false);
 
-  const q = useQuery({ queryKey: ["asset-map-pins"], queryFn: () => assetsApi.mapPins() });
+  const queryClient = useQueryClient();
+
+  // mapPins đằng nào cũng tải detail của mọi tài sản để lấy toạ độ — nạp luôn vào cache
+  // theo đúng khoá mà AssetDetailDialog/AssetDetailPanel dùng, để mở chi tiết một tài sản
+  // không phải gọi lại chính request vừa xong.
+  const q = useQuery({
+    queryKey: ["asset-map-pins"],
+    queryFn: () => assetsApi.mapPins((d) => queryClient.setQueryData(["asset", d.id], d)),
+  });
 
   // Thu nhập theo tháng của cả danh mục — quyết định marker nào "thở" và sparkline.
   const incomeQ = useQuery({
@@ -120,7 +128,7 @@ function AssetMapDashboard() {
       </div>
 
       {/* Thanh nổi trên cùng — mỏng, không chiếm chỗ của bản đồ bên dưới */}
-      <div className="absolute top-3 left-3 z-20">
+      <div className="absolute top-3 left-3 z-[870]">
         <MapTopBar
           search={search}
           onSearchChange={setSearch}
@@ -172,8 +180,12 @@ function AssetMapDashboard() {
       {/* Tài sản chưa có toạ độ không có marker để neo card "mở tại chỗ" — dùng panel
           chi tiết ở cột phải riêng cho trường hợp này. */}
       {selectedHasNoLocation && selectedId && (
-        <div className="absolute top-3 right-3 bottom-3 z-30 w-[340px] max-w-[calc(100%-1.5rem)]">
-          <AssetDetailPanel assetId={selectedId} onClose={closeDetail} />
+        <div className="absolute top-3 right-3 bottom-3 z-[875] w-[340px] max-w-[calc(100%-1.5rem)]">
+          <AssetDetailPanel
+            assetId={selectedId}
+            onClose={closeDetail}
+            onOpenDetail={setDetailAssetId}
+          />
         </div>
       )}
 
@@ -194,6 +206,7 @@ function AssetMapDashboard() {
         loading={q.isLoading}
         onClose={() => setListOpen(false)}
         onLocate={locateFromList}
+        onOpenDetail={setDetailAssetId}
       />
     </div>
   );

@@ -301,10 +301,15 @@ export const assetsApi = {
    *
    * ⚠️ TẠM GHÉP Ở CLIENT: `GET /assets` không trả toạ độ, chỉ `GET /assets/{id}` mới có
    * `location` — nên phải gọi thêm detail cho từng tài sản. Khi backend bổ sung
-   * `GET /assets/map-pins`, chỉ cần thay thân hàm này bằng đúng 1 lời gọi
-   * `api<AssetMapItem[]>("/assets/map-pins")`; toàn bộ UI phía trên không phải sửa gì.
+   * `GET /assets/map-pins` (đặc tả ở `docs/api-map-pins.md`), chỉ cần thay thân hàm này
+   * bằng đúng 1 lời gọi `api<AssetMapItem[]>("/assets/map-pins")` và bỏ tham số
+   * `onDetail`; toàn bộ UI phía trên không phải sửa gì.
+   *
+   * @param onDetail Nhận từng `AssetDetail` vừa tải về. Hàm này đằng nào cũng đã tải đủ
+   *   detail của mọi tài sản rồi vứt đi tất cả trừ toạ độ — trả chúng cho phía gọi để nạp
+   *   sẵn vào cache, tránh gọi lại đúng request đó khi người dùng mở chi tiết một tài sản.
    */
-  mapPins: async (): Promise<AssetMapItem[]> => {
+  mapPins: async (onDetail?: (detail: AssetDetail) => void): Promise<AssetMapItem[]> => {
     const page = await api<PagedResult<AssetListItem>>(
       `/assets${toQuery({ page: 1, pageSize: MAP_PIN_LIMIT })}`,
     );
@@ -316,7 +321,9 @@ export const assetsApi = {
         batch.map((a) => api<AssetDetail>(`/assets/${a.id}`).catch(() => null)),
       );
       batch.forEach((a, k) => {
-        const loc = details[k]?.location ?? null;
+        const d = details[k];
+        if (d) onDetail?.(d);
+        const loc = d?.location ?? null;
         out.push({ ...a, latitude: loc?.latitude ?? null, longitude: loc?.longitude ?? null });
       });
     }

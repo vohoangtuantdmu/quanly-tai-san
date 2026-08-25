@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X, Search, MapPinOff, Building2, MapPin } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export interface AssetListOverlayProps {
   open: boolean;
@@ -16,6 +17,8 @@ export interface AssetListOverlayProps {
   onClose: () => void;
   /** Chọn 1 tài sản có toạ độ → đóng overlay và bay tới marker tương ứng. */
   onLocate: (id: string) => void;
+  /** Mo dialog chi tiet ngay tai cho, khong roi ban do. */
+  onOpenDetail: (id: string) => void;
 }
 
 /**
@@ -28,8 +31,10 @@ export function AssetListOverlay({
   loading,
   onClose,
   onLocate,
+  onOpenDetail,
 }: AssetListOverlayProps) {
   const [q, setQ] = useState("");
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +56,14 @@ export function AssetListOverlay({
     : items;
 
   return (
-    <div className="asset-list-overlay fixed inset-0 z-[1100] flex flex-col bg-background">
+    <div
+      ref={trapRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Danh sách tài sản"
+      className="asset-list-overlay fixed inset-0 z-[880] flex flex-col bg-background"
+    >
       <div className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
         <h2 className="text-sm font-semibold">Danh sách tài sản</h2>
         <span className="text-xs tabular-nums text-muted-foreground">
@@ -107,13 +119,13 @@ export function AssetListOverlay({
                 return (
                   <tr key={a.id} className="border-b last:border-0 hover:bg-accent/40">
                     <td className="px-2 py-2">
-                      <Link
-                        to="/tai-san/$id"
-                        params={{ id: a.id }}
-                        className="font-medium hover:underline"
+                      <button
+                        type="button"
+                        onClick={() => onOpenDetail(a.id)}
+                        className="cursor-pointer text-left font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >
                         {a.name}
-                      </Link>
+                      </button>
                     </td>
                     <td className="px-2 py-2 text-muted-foreground">
                       {[a.district, a.city].filter(Boolean).join(", ") || "—"}
