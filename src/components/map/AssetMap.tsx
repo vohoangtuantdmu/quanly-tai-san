@@ -225,7 +225,11 @@ function SelectionLayer({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Chỉ lớp trên cùng được xử lý Esc. Khi AssetDetailDialog (hoặc sheet) đang mở đè
+      // lên, một lần Esc phải đóng đúng lớp đó — không đóng luôn cả thẻ xem nhanh bên dưới.
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+      onClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);

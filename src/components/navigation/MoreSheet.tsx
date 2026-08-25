@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Users, Tag, Megaphone, Globe, X, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export interface MoreItem {
   label: string;
@@ -25,6 +26,7 @@ export interface MoreSheetProps {
 }
 
 export function MoreSheet({ onClose, onPick }: MoreSheetProps) {
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
   const { isAdmin } = useAuth();
   const items = isAdmin
     ? [
@@ -48,6 +50,8 @@ export function MoreSheet({ onClose, onPick }: MoreSheetProps) {
       role="presentation"
     >
       <div
+        ref={trapRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Thêm"

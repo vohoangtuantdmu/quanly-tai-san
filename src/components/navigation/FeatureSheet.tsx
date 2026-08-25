@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export interface FeatureSheetProps {
   title: string;
@@ -10,6 +11,8 @@ export interface FeatureSheetProps {
 
 /** Wrapper chung cho mọi tính năng phụ mở dạng sheet đè lên bản đồ. */
 export function FeatureSheet({ title, onClose, children }: FeatureSheetProps) {
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -31,6 +34,8 @@ export function FeatureSheet({ title, onClose, children }: FeatureSheetProps) {
       role="presentation"
     >
       <div
+        ref={trapRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}

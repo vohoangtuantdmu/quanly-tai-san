@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X, Search, MapPinOff, Building2, MapPin } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export interface AssetListOverlayProps {
   open: boolean;
@@ -30,6 +31,7 @@ export function AssetListOverlay({
   onLocate,
 }: AssetListOverlayProps) {
   const [q, setQ] = useState("");
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +53,14 @@ export function AssetListOverlay({
     : items;
 
   return (
-    <div className="asset-list-overlay fixed inset-0 z-[1100] flex flex-col bg-background">
+    <div
+      ref={trapRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Danh sách tài sản"
+      className="asset-list-overlay fixed inset-0 z-[880] flex flex-col bg-background"
+    >
       <div className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
         <h2 className="text-sm font-semibold">Danh sách tài sản</h2>
         <span className="text-xs tabular-nums text-muted-foreground">

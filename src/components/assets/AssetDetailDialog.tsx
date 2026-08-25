@@ -20,6 +20,7 @@ import { AssetUnitsTab } from "@/components/units/AssetUnitsTab";
 import { AssetContractsTab } from "@/components/contracts/AssetContractsTab";
 import { AssetDocumentsTab } from "@/components/assets/AssetDocumentsTab";
 import { X, ImageIcon, MapPin, Pencil, ExternalLink, Ruler, Wallet, Calendar } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export interface AssetDetailDialogProps {
   assetId: string | null;
@@ -36,6 +37,7 @@ export interface AssetDetailDialogProps {
  */
 export function AssetDetailDialog({ assetId, onClose }: AssetDetailDialogProps) {
   const [tab, setTab] = useState("overview");
+  const trapRef = useFocusTrap<HTMLDivElement>(!!assetId);
 
   const q = useQuery({
     queryKey: ["asset", assetId],
@@ -68,6 +70,8 @@ export function AssetDetailDialog({ assetId, onClose }: AssetDetailDialogProps) 
       role="presentation"
     >
       <div
+        ref={trapRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={a?.name ?? "Chi tiết tài sản"}
