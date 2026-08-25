@@ -197,6 +197,7 @@ function SelectionLayer({
   alive,
   income,
   onClose,
+  onOpenDetail,
   rightInset,
 }: {
   target: LocatedAsset;
@@ -204,6 +205,7 @@ function SelectionLayer({
   alive: boolean;
   income: PortfolioIncome;
   onClose: () => void;
+  onOpenDetail: (id: string) => void;
   rightInset: number;
 }) {
   const map = useMap();
@@ -271,7 +273,12 @@ function SelectionLayer({
           transformOrigin: `${originX}px ${originY}px`,
         }}
       >
-        <AssetQuickCard asset={target} income={income[target.id]} onClose={onClose} />
+        <AssetQuickCard
+          asset={target}
+          income={income[target.id]}
+          onClose={onClose}
+          onOpenDetail={onOpenDetail}
+        />
       </div>
     </>
   );
@@ -348,6 +355,7 @@ export interface AssetMapProps {
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
   onCloseSelection: () => void;
+  onOpenDetail: (id: string) => void;
   income: PortfolioIncome;
   /** Bề rộng vùng bị panel che ở mép phải, để căn khung nhìn và vị trí card cho đúng. */
   rightInset?: number;
@@ -360,6 +368,7 @@ export default function AssetMap({
   onHover,
   onSelect,
   onCloseSelection,
+  onOpenDetail,
   income,
   rightInset = 380,
 }: AssetMapProps) {
@@ -420,6 +429,7 @@ export default function AssetMap({
           alive={isAlive(selected.id)}
           income={income}
           onClose={onCloseSelection}
+          onOpenDetail={onOpenDetail}
           rightInset={rightInset}
         />
       )}

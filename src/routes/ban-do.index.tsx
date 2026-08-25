@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { assetsApi } from "@/lib/api/assets";
@@ -6,23 +6,32 @@ import { contractsApi } from "@/lib/api/contracts";
 import { fetchPortfolioIncome } from "@/lib/asset-income";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useViewportKind } from "@/hooks/useViewportKind";
-import { useRail } from "@/components/layout/RailContext";
 import { AssetMapClient } from "@/components/map/AssetMapClient";
 import { MapTopBar, type StatusFilter } from "@/components/dashboard/MapTopBar";
 import { MapStatPanels } from "@/components/dashboard/MapStatPanels";
 import { AssetListOverlay } from "@/components/dashboard/AssetListOverlay";
 import { AssetDetailPanel } from "@/components/dashboard/AssetDetailPanel";
+import { AssetDetailDialog } from "@/components/assets/AssetDetailDialog";
+import { FeatureSheet } from "@/components/navigation/FeatureSheet";
+import { findSheet, SHEET_KEYS } from "@/components/navigation/sheetRoutes";
 import { Button } from "@/components/ui/button";
 import { Building2, Plus, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/ban-do/")({
+  // `?sheet=` mở tính năng phụ ĐÈ LÊN bản đồ mà không đổi route → bản đồ không unmount,
+  // giữ nguyên vị trí/zoom; Back của trình duyệt bỏ param này nên tự đóng sheet.
+  validateSearch: (s: Record<string, unknown>): { sheet?: string } =>
+    typeof s.sheet === "string" && SHEET_KEYS.includes(s.sheet) ? { sheet: s.sheet } : {},
   head: () => ({ meta: [{ title: "Bản đồ tài sản — Quản Lý Tài Sản" }] }),
   component: AssetMapDashboard,
 });
 
 function AssetMapDashboard() {
   const viewportKind = useViewportKind();
-  const rail = useRail();
+  const navigate = useNavigate();
+  const { sheet } = Route.useSearch();
+  const activeSheet = findSheet(sheet);
+  const [detailAssetId, setDetailAssetId] = useState<string | null>(null);
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -104,6 +113,7 @@ function AssetMapDashboard() {
           onHover={handleHover}
           onSelect={handleSelect}
           onCloseSelection={closeDetail}
+          onOpenDetail={setDetailAssetId}
           income={incomeQ.data ?? {}}
           rightInset={40}
         />
@@ -118,7 +128,6 @@ function AssetMapDashboard() {
           onStatusChange={setStatus}
           countOf={countOf}
           onOpenList={() => setListOpen(true)}
-          onOpenRail={rail?.openRail}
         />
       </div>
 
@@ -167,6 +176,17 @@ function AssetMapDashboard() {
           <AssetDetailPanel assetId={selectedId} onClose={closeDetail} />
         </div>
       )}
+
+      {activeSheet && (
+        <FeatureSheet
+          title={activeSheet.title}
+          onClose={() => navigate({ to: "/ban-do", search: {} })}
+        >
+          <activeSheet.Component embedded />
+        </FeatureSheet>
+      )}
+
+      <AssetDetailDialog assetId={detailAssetId} onClose={() => setDetailAssetId(null)} />
 
       <AssetListOverlay
         open={listOpen}

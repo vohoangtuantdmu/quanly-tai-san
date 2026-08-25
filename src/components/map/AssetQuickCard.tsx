@@ -51,9 +51,11 @@ export interface AssetQuickCardProps {
   asset: AssetMapItem;
   income?: AssetIncomeSummary;
   onClose: () => void;
+  /** Mở dialog chi tiết đầy đủ thay vì điều hướng sang trang. */
+  onOpenDetail: (id: string) => void;
 }
 
-export function AssetQuickCard({ asset, income, onClose }: AssetQuickCardProps) {
+export function AssetQuickCard({ asset, income, onClose, onOpenDetail }: AssetQuickCardProps) {
   const contractsQ = useQuery({
     queryKey: ["contracts", { assetId: asset.id }],
     queryFn: () => contractsApi.list({ assetId: asset.id, pageSize: 50 }),
@@ -136,11 +138,10 @@ export function AssetQuickCard({ asset, income, onClose }: AssetQuickCardProps) 
           )
         )}
 
-        <Button size="sm" className="w-full" asChild>
-          <Link to="/tai-san/$id" params={{ id: asset.id }}>
-            Xem chi tiết đầy đủ
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Link>
+        {/* Mở dialog chi tiết ngay tại chỗ — không rời bản đồ */}
+        <Button size="sm" className="w-full" onClick={() => onOpenDetail(asset.id)}>
+          Xem chi tiết đầy đủ
+          <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
         </Button>
       </div>
     </div>

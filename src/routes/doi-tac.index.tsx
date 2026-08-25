@@ -21,10 +21,11 @@ import { Plus, Search, Phone, Mail, Pencil, Trash2, Users, RefreshCw } from "luc
 
 export const Route = createFileRoute("/doi-tac/")({
   head: () => ({ meta: [{ title: "Sổ đối tác — Quản Lý Tài Sản" }] }),
-  component: Contacts,
+  component: ContactsPage,
 });
 
-function Contacts() {
+/** `embedded` = đang render bên trong FeatureSheet: bỏ padding/tiêu đề trùng lặp. */
+export function ContactsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const qc = useQueryClient();
   const [keywordInput, setKeywordInput] = useState("");
   const [keyword, setKeyword] = useState("");
@@ -66,10 +67,12 @@ function Contacts() {
   const data = query.data;
 
   return (
-    <div className="p-6 space-y-5 max-w-[1400px]">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-[1400px]"}>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Sổ đối tác</h1>
+          {!embedded && (
+            <h1 className="text-2xl font-semibold tracking-tight">Sổ đối tác</h1>
+          )}
           <p className="text-sm text-muted-foreground mt-1">
             {data ? `${data.totalCount} liên hệ` : "Đang tải..."} · Người thuê, chủ nhà, môi giới, nhà thầu.
           </p>

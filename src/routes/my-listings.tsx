@@ -23,7 +23,8 @@ export const Route = createFileRoute("/my-listings")({
   component: MyListingsPage,
 });
 
-function MyListingsPage() {
+/** `embedded` = đang render bên trong FeatureSheet: bỏ padding/tiêu đề trùng lặp. */
+export function MyListingsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const query = useQuery({
     queryKey: ["my-listings"],
@@ -39,9 +40,9 @@ function MyListingsPage() {
   };
 
   return (
-    <div className="p-6 space-y-5 max-w-[1200px]">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-[1200px]"}>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Tin đăng của tôi</h1>
+        {!embedded && <h1 className="text-2xl font-semibold tracking-tight">Tin đăng của tôi</h1>}
         <p className="text-sm text-muted-foreground mt-1">
           Theo dõi trạng thái duyệt và lượt xem các tin đăng bạn đã gửi lên marketplace.
         </p>
