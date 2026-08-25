@@ -237,6 +237,30 @@
   }
 }
 
+/* ---- Vuốt xuống để đóng sheet ---- */
+/* Chỉ dùng cho lúc "bật về" khi kéo chưa đủ ngưỡng; lúc đang kéo, hook đặt
+   transition:none inline để tấm sheet bám ngón tay theo thời gian thực. */
+.sheet-draggable {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Vùng tay cầm phải tự xử lý cử chỉ dọc, nếu không trình duyệt sẽ cuộn trang thay vì
+   gửi pointermove cho ta. */
+.sheet-grab-area {
+  touch-action: none;
+}
+.sheet-grabber {
+  margin: 8px auto 0;
+  height: 4px;
+  width: 40px;
+  border-radius: 9999px;
+  background: var(--border);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-draggable {
+    transition: none;
+  }
+}
+
 /* ---- Thanh nổi trên cùng của trang Bản đồ ---- */
 .map-topbar {
   background: color-mix(in oklab, var(--color-card) 88%, transparent);
