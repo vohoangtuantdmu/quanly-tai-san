@@ -109,11 +109,14 @@ function useAssetOptions() {
   });
 }
 
-function CashflowPage() {
+/** `embedded` = đang render bên trong FeatureSheet: bỏ padding/tiêu đề trùng lặp. */
+export function CashflowPage({ embedded = false }: { embedded?: boolean } = {}) {
   return (
-    <div className="p-6 space-y-5 max-w-[1400px]">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-[1400px]"}>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Sổ thu chi & Báo cáo</h1>
+        {!embedded && (
+          <h1 className="text-2xl font-semibold tracking-tight">Sổ thu chi & Báo cáo</h1>
+        )}
         <p className="text-sm text-muted-foreground mt-1">
           Ghi chép giao dịch và xem báo cáo tài chính theo tài sản, thời gian.
         </p>

@@ -27,12 +27,13 @@ import { Plus, AlertTriangle, FileText, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/hop-dong/")({
   head: () => ({ meta: [{ title: "Quản lý hợp đồng — Quản Lý Tài Sản" }] }),
-  component: ContractList,
+  component: ContractListPage,
 });
 
 type Tab = "all" | "out" | "in" | "expiring";
 
-function ContractList() {
+/** `embedded` = đang render bên trong FeatureSheet: bỏ padding/tiêu đề trùng lặp. */
+export function ContractListPage({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("all");
   const [page, setPage] = useState(1);
@@ -60,10 +61,10 @@ function ContractList() {
       : items;
 
   return (
-    <div className="p-6 space-y-5 max-w-[1400px]">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-[1400px]"}>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Quản lý hợp đồng</h1>
+          {!embedded && <h1 className="text-2xl font-semibold tracking-tight">Quản lý hợp đồng</h1>}
           <p className="text-sm text-muted-foreground mt-1">
             {q.data ? `${q.data.totalCount} hợp đồng` : "Đang tải..."}
           </p>

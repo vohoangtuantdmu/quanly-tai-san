@@ -173,51 +173,74 @@
   animation: heart-pop 200ms ease-out;
 }
 
-/* ---- Icon rail điều hướng (72px, navy) ---- */
-.icon-rail {
-  background: #1e2761;
-  color: rgb(255 255 255 / 0.75);
+/* ---- Bottom tab bar (hệ điều hướng duy nhất) ---- */
+.bottom-tabbar {
+  border-radius: 28px;
+  background: rgb(255 255 255 / 0.75);
+  backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgb(255 255 255 / 0.5);
+  box-shadow: 0 8px 32px rgb(16 24 40 / 0.18);
 }
-.icon-rail--overlay {
-  height: 100%;
-  box-shadow: 0 8px 40px rgb(16 24 40 / 0.28);
+@supports (backdrop-filter: blur(1px)) {
+  .bottom-tabbar {
+    background: rgb(255 255 255 / 0.6);
+  }
 }
-.icon-rail__item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1.5px solid transparent;
-  color: rgb(255 255 255 / 0.75);
-  cursor: pointer;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+.dark .bottom-tabbar {
+  background: color-mix(in oklab, var(--color-card) 75%, transparent);
+  border-color: rgb(255 255 255 / 0.12);
 }
-.icon-rail__item:hover {
-  background: rgb(255 255 255 / 0.1);
-  color: #fff;
+
+/* ---- Chuyển động dùng chung cho sheet/dialog ---- */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-.icon-rail__item:focus-visible {
-  outline: 2px solid #f2a93b;
-  outline-offset: 2px;
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-/* Amber nhấn — dùng đúng màu của Vòng Giá trị, không đặt màu khác */
-.icon-rail__item--active {
-  background: rgb(242 169 59 / 0.15);
-  border-color: #f2a93b;
-  color: #f2a93b;
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.icon-rail__item--active:hover {
-  background: rgb(242 169 59 / 0.22);
-  color: #f2a93b;
+.animate-fade-in {
+  animation: fade-in 180ms ease-out;
+}
+.animate-scale-in {
+  animation: scale-in 220ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+.animate-slide-up {
+  animation: slide-up 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-scale-in,
+  .animate-slide-up {
+    animation: none;
+  }
 }
 
 /* ---- Thanh nổi trên cùng của trang Bản đồ ---- */
 .map-topbar {
   background: color-mix(in oklab, var(--color-card) 88%, transparent);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid color-mix(in oklab, #fff 60%, transparent);
   border-radius: 14px;
   box-shadow:
@@ -257,7 +280,6 @@
 .map-panel {
   background: color-mix(in oklab, var(--color-card) 92%, transparent);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid color-mix(in oklab, #fff 60%, transparent);
   border-radius: 16px;
   box-shadow:

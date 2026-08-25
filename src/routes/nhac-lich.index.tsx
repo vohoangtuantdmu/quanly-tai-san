@@ -64,7 +64,8 @@ export const Route = createFileRoute("/nhac-lich/")({
 
 type ActiveFilter = "all" | "on" | "off";
 
-function RemindersPage() {
+/** `embedded` = đang render bên trong FeatureSheet: bỏ padding/tiêu đề trùng lặp. */
+export function RemindersPage({ embedded = false }: { embedded?: boolean } = {}) {
   const qc = useQueryClient();
   const [fActive, setFActive] = useState<ActiveFilter>("all");
   const [page, setPage] = useState(1);
@@ -114,10 +115,10 @@ function RemindersPage() {
   const rows = data?.items ?? [];
 
   return (
-    <div className="p-6 space-y-5 max-w-[1400px]">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-[1400px]"}>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Nhắc lịch</h1>
+          {!embedded && <h1 className="text-2xl font-semibold tracking-tight">Nhắc lịch</h1>}
           <p className="text-sm text-muted-foreground mt-1">
             Danh sách nhắc nhở cho thu chi, bảo dưỡng, thuế, hợp đồng.
           </p>

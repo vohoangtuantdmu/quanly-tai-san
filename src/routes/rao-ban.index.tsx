@@ -15,7 +15,8 @@ export const Route = createFileRoute("/rao-ban/")({
   component: SalePage,
 });
 
-function SalePage() {
+/** `embedded` = đang render bên trong FeatureSheet: bỏ padding/tiêu đề trùng lặp. */
+export function SalePage({ embedded = false }: { embedded?: boolean } = {}) {
   const query = useQuery({
     queryKey: ["sale-listings"],
     queryFn: () => saleListingsApi.mine(),
@@ -25,9 +26,11 @@ function SalePage() {
   const listings = query.data ?? [];
 
   return (
-    <div className="p-6 space-y-5 max-w-[1400px]">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-[1400px]"}>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Theo dõi gửi môi giới</h1>
+        {!embedded && (
+          <h1 className="text-2xl font-semibold tracking-tight">Theo dõi gửi môi giới</h1>
+        )}
         <p className="text-sm text-muted-foreground mt-1">
           Sổ nội bộ ghi lại giá đã báo và các môi giới đã gửi tài sản — chỉ bạn xem được, không hiển
           thị công khai.
