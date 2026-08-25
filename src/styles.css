@@ -364,20 +364,22 @@
 
 /* Spotlight: chỉ phủ tối vùng bản đồ. Panel/điều khiển ngoài bản đồ nằm ở stacking
    context khác nên vẫn sáng và bấm được bình thường. */
+/* Ba lop nay duoc portal ra document.body nen dung `fixed` theo viewport.
+   Thang z-index: xem bang tham chieu o docs/z-index.md */
 .asset-spotlight {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgb(0 0 0 / 0.25);
-  z-index: 998;
+  z-index: 840;
 }
 .asset-selected-ring {
-  position: absolute;
-  z-index: 999;
+  position: fixed;
+  z-index: 845;
   pointer-events: none;
 }
 .asset-quickcard {
-  position: absolute;
-  z-index: 1000;
+  position: fixed;
+  z-index: 850;
 }
 
 .asset-cluster {

@@ -11,6 +11,7 @@ import "leaflet.markercluster";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { AssetMapItem } from "@/lib/api/assets";
 import type { AssetStatusCode } from "@/constants/enums";
 import type { PortfolioIncome } from "@/lib/asset-income";
@@ -209,13 +210,16 @@ function SelectionLayer({
   rightInset: number;
 }) {
   const map = useMap();
-  const read = useCallback(
-    () => ({
+  // Lớp này được PORTAL ra document.body (xem phần return) nên toạ độ phải quy về
+  // viewport, không phải toạ độ trong container bản đồ.
+  const read = useCallback(() => {
+    const box = map.getContainer().getBoundingClientRect();
+    return {
       pt: map.latLngToContainerPoint([target.latitude, target.longitude]),
       size: map.getSize(),
-    }),
-    [map, target.latitude, target.longitude],
-  );
+      offset: { x: box.left, y: box.top },
+    };
+  }, [map, target.latitude, target.longitude]);
   const [geo, setGeo] = useState(read);
 
   // Card neo theo marker: pan/zoom thì đi theo, không bị "rớt" lại một chỗ
@@ -235,7 +239,7 @@ function SelectionLayer({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const { pt, size } = geo;
+  const { pt, size, offset } = geo;
 
   // Chọn phía còn nhiều chỗ nhất, rồi kẹp lại trong viewport — cùng cách đã dùng để sửa
   // popover "Tìm quanh vị trí" ở Marketplace.
@@ -256,13 +260,17 @@ function SelectionLayer({
   const originX = clamp(pt.x - left, 0, QUICK_CARD_WIDTH);
   const originY = clamp(pt.y - top, 0, CARD_EST_HEIGHT);
 
-  return (
+  // PORTAL ra document.body: nếu render trong cây bản đồ, cả 3 lớp này bị nhốt trong
+  // stacking context `z-0` của wrapper bản đồ (thứ bắt buộc phải có để giam các pane
+  // Leaflet z-400..700). Hệ quả đã đo được: quick card khai báo z-1000 vẫn bị panel
+  // thống kê z-10 che mất. Ra ngoài body thì z-index mới có hiệu lực thật.
+  return createPortal(
     <>
       <div className="asset-spotlight" onClick={onClose} role="presentation" aria-hidden="true" />
       {/* Bản sao sáng của marker đang chọn, nằm trên lớp tối */}
       <div
         className="asset-selected-ring"
-        style={{ left: pt.x - radius, top: pt.y - radius }}
+        style={{ left: offset.x + pt.x - radius, top: offset.y + pt.y - radius }}
         aria-hidden="true"
         dangerouslySetInnerHTML={{
           __html: ringInnerHtml(target.status, radius, alive, true),
@@ -271,8 +279,8 @@ function SelectionLayer({
       <div
         className="asset-quickcard"
         style={{
-          left,
-          top,
+          left: offset.x + left,
+          top: offset.y + top,
           width: QUICK_CARD_WIDTH,
           transformOrigin: `${originX}px ${originY}px`,
         }}
@@ -284,7 +292,8 @@ function SelectionLayer({
           onOpenDetail={onOpenDetail}
         />
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 

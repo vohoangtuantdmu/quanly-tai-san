@@ -120,7 +120,7 @@ function AssetMapDashboard() {
       </div>
 
       {/* Thanh nổi trên cùng — mỏng, không chiếm chỗ của bản đồ bên dưới */}
-      <div className="absolute top-3 left-3 z-20">
+      <div className="absolute top-3 left-3 z-[870]">
         <MapTopBar
           search={search}
           onSearchChange={setSearch}
@@ -172,8 +172,12 @@ function AssetMapDashboard() {
       {/* Tài sản chưa có toạ độ không có marker để neo card "mở tại chỗ" — dùng panel
           chi tiết ở cột phải riêng cho trường hợp này. */}
       {selectedHasNoLocation && selectedId && (
-        <div className="absolute top-3 right-3 bottom-3 z-30 w-[340px] max-w-[calc(100%-1.5rem)]">
-          <AssetDetailPanel assetId={selectedId} onClose={closeDetail} />
+        <div className="absolute top-3 right-3 bottom-3 z-[875] w-[340px] max-w-[calc(100%-1.5rem)]">
+          <AssetDetailPanel
+            assetId={selectedId}
+            onClose={closeDetail}
+            onOpenDetail={setDetailAssetId}
+          />
         </div>
       )}
 
@@ -194,6 +198,7 @@ function AssetMapDashboard() {
         loading={q.isLoading}
         onClose={() => setListOpen(false)}
         onLocate={locateFromList}
+        onOpenDetail={setDetailAssetId}
       />
     </div>
   );

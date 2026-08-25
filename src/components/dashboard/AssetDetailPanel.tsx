@@ -32,9 +32,11 @@ const CASHFLOW_MONTHS = 3;
 export interface AssetDetailPanelProps {
   assetId: string;
   onClose: () => void;
+  /** Mo dialog chi tiet day du tai cho — khong dieu huong roi ban do. */
+  onOpenDetail?: (id: string) => void;
 }
 
-export function AssetDetailPanel({ assetId, onClose }: AssetDetailPanelProps) {
+export function AssetDetailPanel({ assetId, onClose, onOpenDetail }: AssetDetailPanelProps) {
   const detailQ = useQuery({
     queryKey: ["asset", assetId],
     queryFn: () => assetsApi.detail(assetId),
@@ -215,12 +217,19 @@ export function AssetDetailPanel({ assetId, onClose }: AssetDetailPanelProps) {
       </div>
 
       <div className="shrink-0 space-y-1.5 border-t p-3">
-        <Button size="sm" className="w-full" asChild>
-          <Link to="/tai-san/$id" params={{ id: assetId }}>
+        {onOpenDetail ? (
+          <Button size="sm" className="w-full" onClick={() => onOpenDetail(assetId)}>
             Xem chi tiết đầy đủ
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button size="sm" className="w-full" asChild>
+            <Link to="/tai-san/$id" params={{ id: assetId }}>
+              Xem chi tiết đầy đủ
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        )}
         <div className="grid grid-cols-2 gap-1.5">
           <Button size="sm" variant="outline" asChild>
             <Link to="/tai-san/$id" params={{ id: assetId }} search={{ tab: "sale" }}>
