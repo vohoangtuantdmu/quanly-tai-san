@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { assetsApi } from "@/lib/api/assets";
 import { contractsApi } from "@/lib/api/contracts";
 import { fetchPortfolioIncome } from "@/lib/asset-income";
@@ -39,7 +39,15 @@ function AssetMapDashboard() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [listOpen, setListOpen] = useState(false);
 
-  const q = useQuery({ queryKey: ["asset-map-pins"], queryFn: () => assetsApi.mapPins() });
+  const queryClient = useQueryClient();
+
+  // mapPins đằng nào cũng tải detail của mọi tài sản để lấy toạ độ — nạp luôn vào cache
+  // theo đúng khoá mà AssetDetailDialog/AssetDetailPanel dùng, để mở chi tiết một tài sản
+  // không phải gọi lại chính request vừa xong.
+  const q = useQuery({
+    queryKey: ["asset-map-pins"],
+    queryFn: () => assetsApi.mapPins((d) => queryClient.setQueryData(["asset", d.id], d)),
+  });
 
   // Thu nhập theo tháng của cả danh mục — quyết định marker nào "thở" và sparkline.
   const incomeQ = useQuery({

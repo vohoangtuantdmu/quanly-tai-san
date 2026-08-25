@@ -43,6 +43,10 @@ export function AssetDetailDialog({ assetId, onClose }: AssetDetailDialogProps) 
     queryKey: ["asset", assetId],
     queryFn: () => assetsApi.detail(assetId!),
     enabled: !!assetId,
+    // Trang bản đồ nạp sẵn detail vào đúng khoá này lúc tải pin. Mặc định staleTime = 0 sẽ
+    // khiến dữ liệu vừa nạp bị coi là stale và refetch nền ngay — nạp cache thành vô nghĩa.
+    // invalidateQueries của các mutation vẫn ép refetch bình thường.
+    staleTime: 60_000,
   });
 
   useEffect(() => {
