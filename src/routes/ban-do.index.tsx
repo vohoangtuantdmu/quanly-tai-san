@@ -144,6 +144,22 @@ function AssetMapDashboard() {
         </div>
       )}
 
+      {/* Nút thêm tài sản.
+          Đặt TRÊN thanh tab chứ không cùng hàng: thanh tab rộng ~352px căn giữa nên trên
+          màn 375px nó chạm tận mép phải, nút ở góc dưới-phải cùng hàng sẽ đè lên.
+          z-870 ngang thanh nổi trên cùng để lúc thẻ xem nhanh mở vẫn bấm được.
+          Ẩn khi danh mục rỗng vì lúc đó đã có nút gọi hành động ở giữa màn hình. */}
+      {!isEmpty && (
+        <Link
+          to="/tai-san/moi"
+          aria-label="Thêm tài sản"
+          className="fixed right-5 bottom-[104px] z-[870] flex items-center gap-2 rounded-full bg-[#1E2761] p-3.5 text-sm font-medium text-white shadow-lg transition-transform hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none sm:py-3 sm:pr-5 sm:pl-4"
+        >
+          <Plus className="h-5 w-5 shrink-0" />
+          <span className="hidden sm:inline">Thêm tài sản</span>
+        </Link>
+      )}
+
       {q.isError && (
         <div className="map-panel absolute top-20 left-1/2 z-20 -translate-x-1/2 px-4 py-3">
           <p className="flex items-center gap-2 text-sm text-destructive">
