@@ -14,7 +14,11 @@ export function EmailNotConfirmedBanner() {
   const resend = async () => {
     setSending(true);
     try {
-      await api("/account/resend-confirmation", { method: "POST", body: { email: user.email }, skipAuth: true });
+      await api("/account/resend-confirmation", {
+        method: "POST",
+        body: { email: user.email },
+        skipAuth: true,
+      });
       toast.success("Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư.");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.detail : "Không gửi được email xác thực.");

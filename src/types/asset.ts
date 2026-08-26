@@ -24,20 +24,33 @@ export interface StoredFileDto {
 
 // ---------- ENUM ----------
 export enum AssetType {
-  PrivateHouse = 1, Apartment = 2, Land = 3, Villa = 4,
-  Shophouse = 5, Office = 6, Other = 99,
+  PrivateHouse = 1,
+  Apartment = 2,
+  Land = 3,
+  Villa = 4,
+  Shophouse = 5,
+  Office = 6,
+  Other = 99,
 }
 
 export enum AssetOwnershipType {
-  Owned = 1, Leasehold = 2,
+  Owned = 1,
+  Leasehold = 2,
 }
 
 export enum AssetStatus {
-  InUse = 1, RentedOut = 2, ForSale = 3, Vacant = 4, Sold = 5, LeaseEnded = 6,
+  InUse = 1,
+  RentedOut = 2,
+  ForSale = 3,
+  Vacant = 4,
+  Sold = 5,
+  LeaseEnded = 6,
 }
 
 export enum UnitStatus {
-  Vacant = 1, Occupied = 2, UnderMaintenance = 3,
+  Vacant = 1,
+  Occupied = 2,
+  UnderMaintenance = 3,
 }
 
 // ---------- REQUEST BODIES ----------

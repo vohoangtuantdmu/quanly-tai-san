@@ -30,7 +30,9 @@ export interface ContactFilters {
 
 export const contactsApi = {
   list: (f: ContactFilters = {}) =>
-    api<PagedResult<ContactParty>>(`/contacts${toQuery({ ...f, page: f.page ?? 1, pageSize: f.pageSize ?? 50 })}`),
+    api<PagedResult<ContactParty>>(
+      `/contacts${toQuery({ ...f, page: f.page ?? 1, pageSize: f.pageSize ?? 50 })}`,
+    ),
   create: (body: ContactInput) => api<ContactParty>("/contacts", { method: "POST", body }),
   update: (id: string, body: ContactInput) =>
     api<ContactParty>(`/contacts/${id}`, { method: "PUT", body }),

@@ -27,7 +27,11 @@ function ConfirmEmailPage() {
     }
     (async () => {
       try {
-        await api("/account/confirm-email", { method: "POST", body: { userId, token }, skipAuth: true });
+        await api("/account/confirm-email", {
+          method: "POST",
+          body: { userId, token },
+          skipAuth: true,
+        });
         setState("ok");
         setMessage("Email đã được xác thực thành công.");
       } catch (err) {
@@ -45,14 +49,20 @@ function ConfirmEmailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-center">
-            {state === "loading" && <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />}
+            {state === "loading" && (
+              <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+            )}
             {state === "ok" && <CheckCircle2 className="h-10 w-10 text-success" />}
             {state === "error" && <XCircle className="h-10 w-10 text-destructive" />}
           </div>
           <p className="text-sm">{message}</p>
           <div className="flex justify-center gap-3 text-sm">
-            <Link to="/login" className="text-primary hover:underline">Về trang đăng nhập</Link>
-            <Link to="/" className="text-primary hover:underline">Về trang chủ</Link>
+            <Link to="/login" className="text-primary hover:underline">
+              Về trang đăng nhập
+            </Link>
+            <Link to="/" className="text-primary hover:underline">
+              Về trang chủ
+            </Link>
           </div>
         </CardContent>
       </Card>

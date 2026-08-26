@@ -1,6 +1,8 @@
-export type AssetType = "Nhà riêng" | "Căn hộ" | "Đất" | "Biệt thự" | "Nhà mặt phố" | "Văn phòng" | "Khác";
+export type AssetType =
+  "Nhà riêng" | "Căn hộ" | "Đất" | "Biệt thự" | "Nhà mặt phố" | "Văn phòng" | "Khác";
 export type OwnershipType = "Sở hữu" | "Đi thuê";
-export type AssetStatus = "Đang sử dụng" | "Đang cho thuê" | "Đang rao bán" | "Trống" | "Đã bán" | "Hết hợp đồng thuê";
+export type AssetStatus =
+  "Đang sử dụng" | "Đang cho thuê" | "Đang rao bán" | "Trống" | "Đã bán" | "Hết hợp đồng thuê";
 
 export interface Asset {
   id: string;
@@ -71,11 +73,22 @@ export interface ContactParty {
 
 export type CashflowDirection = "Thu" | "Chi";
 export type CashflowCategory =
-  | "Tiền thuê thu vào" | "Tiền cọc nhận" | "Tiền bán"
-  | "Tiền thuê trả chủ nhà" | "Tiền cọc trả"
-  | "Chi phí sửa chữa" | "Hoá đơn điện" | "Hoá đơn nước" | "Hoá đơn internet"
-  | "Phí quản lý" | "Thuế trước bạ" | "Thuế phi nông nghiệp"
-  | "Thuế môn bài" | "Thuế TNCN" | "Thuế GTGT" | "Thuế khác";
+  | "Tiền thuê thu vào"
+  | "Tiền cọc nhận"
+  | "Tiền bán"
+  | "Tiền thuê trả chủ nhà"
+  | "Tiền cọc trả"
+  | "Chi phí sửa chữa"
+  | "Hoá đơn điện"
+  | "Hoá đơn nước"
+  | "Hoá đơn internet"
+  | "Phí quản lý"
+  | "Thuế trước bạ"
+  | "Thuế phi nông nghiệp"
+  | "Thuế môn bài"
+  | "Thuế TNCN"
+  | "Thuế GTGT"
+  | "Thuế khác";
 
 export interface CashFlowEntry {
   id: string;
@@ -90,7 +103,13 @@ export interface CashFlowEntry {
   linkedMaintenanceId?: string;
 }
 
-export type ReminderType = "Thu tiền thuê" | "Đóng tiền thuê" | "Bảo dưỡng" | "Hết hạn hợp đồng" | "Đóng thuế" | "Thanh toán hoá đơn";
+export type ReminderType =
+  | "Thu tiền thuê"
+  | "Đóng tiền thuê"
+  | "Bảo dưỡng"
+  | "Hết hạn hợp đồng"
+  | "Đóng thuế"
+  | "Thanh toán hoá đơn";
 export type ReminderCycle = "Không lặp" | "Tháng" | "Quý" | "Nửa năm" | "Năm";
 export interface Reminder {
   id: string;
@@ -104,7 +123,17 @@ export interface Reminder {
   enabled: boolean;
 }
 
-export type DocumentType = "Sổ đỏ/sổ hồng" | "HĐ mua bán" | "HĐ thuê" | "Phụ lục HĐ" | "HĐ uỷ quyền" | "HĐ điện" | "HĐ nước" | "Hồ sơ thuế" | "Hoá đơn" | "Khác";
+export type DocumentType =
+  | "Sổ đỏ/sổ hồng"
+  | "HĐ mua bán"
+  | "HĐ thuê"
+  | "Phụ lục HĐ"
+  | "HĐ uỷ quyền"
+  | "HĐ điện"
+  | "HĐ nước"
+  | "Hồ sơ thuế"
+  | "Hoá đơn"
+  | "Khác";
 export interface AssetDocument {
   id: string;
   assetId: string;

@@ -59,21 +59,40 @@ function ResetPasswordPage() {
           {missing ? (
             <div className="space-y-3">
               <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                Liên kết không hợp lệ hoặc thiếu tham số. Vui lòng yêu cầu lại email đặt lại mật khẩu.
+                Liên kết không hợp lệ hoặc thiếu tham số. Vui lòng yêu cầu lại email đặt lại mật
+                khẩu.
               </div>
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline">Yêu cầu lại</Link>
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                Yêu cầu lại
+              </Link>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="password">Mật khẩu mới</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={busy} />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={busy}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="confirm">Xác nhận mật khẩu mới</Label>
-                <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={busy} />
+                <Input
+                  id="confirm"
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  disabled={busy}
+                />
               </div>
-              {error && <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
+              {error && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Đặt lại mật khẩu
               </Button>

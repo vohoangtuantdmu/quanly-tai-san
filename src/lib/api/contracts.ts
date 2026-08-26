@@ -92,8 +92,7 @@ export const contractsApi = {
     api<LeaseContractDto>(`/contracts/${id}/renew`, { method: "POST", body }),
   terminate: (id: string, body: TerminateContractInput) =>
     api<LeaseContractDto>(`/contracts/${id}/terminate`, { method: "POST", body }),
-  expiring: (days = 30) =>
-    api<ExpiringContract[]>(`/contracts/expiring${toQuery({ days })}`),
+  expiring: (days = 30) => api<ExpiringContract[]>(`/contracts/expiring${toQuery({ days })}`),
 };
 
 export function toIsoUtc(dateStr: string): string {

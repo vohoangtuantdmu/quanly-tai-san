@@ -45,8 +45,8 @@ là dữ liệu để vẽ bản đồ, cần đủ mới đúng).
     "thumbnailUrl": "https://.../thumb.jpg",
     "linkedPropertyId": null,
     "latitude": 10.8021, // null nếu tài sản chưa gắn vị trí
-    "longitude": 106.7411 // null nếu tài sản chưa gắn vị trí
-  }
+    "longitude": 106.7411, // null nếu tài sản chưa gắn vị trí
+  },
 ]
 ```
 
@@ -56,12 +56,12 @@ xem nhanh.
 
 ### Ràng buộc
 
-| Điểm | Yêu cầu |
-| --- | --- |
+| Điểm                   | Yêu cầu                                                                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Tài sản chưa có vị trí | Vẫn phải trả về, với `latitude`/`longitude` = `null`. Frontend liệt kê chúng riêng trong overlay danh sách kèm nút "Bổ sung" — bỏ sót là người dùng không biết mình còn tài sản chưa gắn vị trí. |
-| Phân quyền | Chỉ trả tài sản của người dùng đang đăng nhập, đúng như `GET /assets`. |
-| Sắp xếp | Không quan trọng, frontend tự xử lý. |
-| Phân trang | Không. Nếu buộc phải có trần thì đặt ở phía server và nêu rõ trong response header. |
+| Phân quyền             | Chỉ trả tài sản của người dùng đang đăng nhập, đúng như `GET /assets`.                                                                                                                           |
+| Sắp xếp                | Không quan trọng, frontend tự xử lý.                                                                                                                                                             |
+| Phân trang             | Không. Nếu buộc phải có trần thì đặt ở phía server và nêu rõ trong response header.                                                                                                              |
 
 ## Sau khi backend có endpoint
 
