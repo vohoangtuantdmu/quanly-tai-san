@@ -161,7 +161,23 @@ export interface AssetMapItem extends AssetListItem {
   longitude: number | null;
 }
 
-/** Trần số tài sản lấy về cho bản đồ — thực tế danh mục cá nhân hiếm khi chạm tới. */
+/** Kết quả tải pin bản đồ, kèm thông tin có bị chạm trần hay không. */
+export interface AssetMapPins {
+  items: AssetMapItem[];
+  /** Tổng số tài sản theo server, kể cả phần không tải về. */
+  totalCount: number;
+  /** true = danh mục vượt trần nên bản đồ đang thiếu tài sản. */
+  truncated: boolean;
+}
+
+/**
+ * Trần số tài sản lấy về cho bản đồ.
+ *
+ * Không bỏ trần được: mỗi tài sản tốn thêm 1 request detail để lấy toạ độ (xem `mapPins`),
+ * nên tải hết một danh mục lớn sẽ rất chậm. Nhưng chạm trần thì PHẢI báo cho người dùng
+ * qua cờ `truncated` — bản đồ thiếu tài sản mà im lặng là hiểu sai danh mục của mình.
+ * Hết N+1 (có `GET /assets/map-pins`) thì bỏ luôn cả trần lẫn cờ này.
+ */
 const MAP_PIN_LIMIT = 200;
 /** Số request detail chạy song song tối đa, tránh dội server khi danh mục lớn. */
 const MAP_PIN_CONCURRENCY = 8;
@@ -309,7 +325,7 @@ export const assetsApi = {
    *   detail của mọi tài sản rồi vứt đi tất cả trừ toạ độ — trả chúng cho phía gọi để nạp
    *   sẵn vào cache, tránh gọi lại đúng request đó khi người dùng mở chi tiết một tài sản.
    */
-  mapPins: async (onDetail?: (detail: AssetDetail) => void): Promise<AssetMapItem[]> => {
+  mapPins: async (onDetail?: (detail: AssetDetail) => void): Promise<AssetMapPins> => {
     const page = await api<PagedResult<AssetListItem>>(
       `/assets${toQuery({ page: 1, pageSize: MAP_PIN_LIMIT })}`,
     );
@@ -327,7 +343,7 @@ export const assetsApi = {
         out.push({ ...a, latitude: loc?.latitude ?? null, longitude: loc?.longitude ?? null });
       });
     }
-    return out;
+    return { items: out, totalCount: page.totalCount, truncated: page.totalCount > out.length };
   },
 
   units: {
