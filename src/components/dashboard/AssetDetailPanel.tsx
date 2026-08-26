@@ -40,11 +40,6 @@ export function AssetDetailPanel({ assetId, onClose, onOpenDetail }: AssetDetail
   const detailQ = useQuery({
     queryKey: ["asset", assetId],
     queryFn: () => assetsApi.detail(assetId),
-    // Trang bản đồ đã nạp sẵn detail của mọi tài sản vào đúng khoá này lúc tải pin.
-    // Không có staleTime thì mặc định là 0 → dữ liệu vừa nạp đã stale, useQuery vẫn refetch
-    // nền và phần nạp cache chỉ bỏ được skeleton chứ không bớt được request nào.
-    // invalidateQueries của các mutation vẫn ép refetch bình thường, không bị ảnh hưởng.
-    staleTime: 60_000,
   });
 
   const contractsQ = useQuery({
