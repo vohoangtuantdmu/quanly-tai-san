@@ -35,6 +35,7 @@ này so sánh được trực tiếp với nhau.
 | 845  | Vòng sáng quanh marker     | `.asset-selected-ring` — `styles.css`    |
 | 850  | Thẻ xem nhanh tài sản      | `.asset-quickcard` — `styles.css`        |
 | 870  | Thanh nổi trên cùng        | `ban-do.index.tsx`                       |
+| 870  | Nút thêm tài sản           | `ban-do.index.tsx`                       |
 | 875  | Panel chi tiết cột phải    | `ban-do.index.tsx`                       |
 | 880  | Overlay danh sách tài sản  | `AssetListOverlay.tsx`                   |
 | 900  | Thanh tab dưới đáy         | `BottomTabBar.tsx`                       |
