@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { assetsApi } from "@/lib/api/assets";
 import { contractsApi } from "@/lib/api/contracts";
 import { fetchPortfolioIncome } from "@/lib/asset-income";
@@ -39,15 +39,7 @@ function AssetMapDashboard() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [listOpen, setListOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-
-  // mapPins đằng nào cũng tải detail của mọi tài sản để lấy toạ độ — nạp luôn vào cache
-  // theo đúng khoá mà AssetDetailDialog/AssetDetailPanel dùng, để mở chi tiết một tài sản
-  // không phải gọi lại chính request vừa xong.
-  const q = useQuery({
-    queryKey: ["asset-map-pins"],
-    queryFn: () => assetsApi.mapPins((d) => queryClient.setQueryData(["asset", d.id], d)),
-  });
+  const q = useQuery({ queryKey: ["asset-map-pins"], queryFn: () => assetsApi.mapPins() });
 
   // Thu nhập theo tháng của cả danh mục — quyết định marker nào "thở" và sparkline.
   const incomeQ = useQuery({
@@ -73,7 +65,7 @@ function AssetMapDashboard() {
   const handleSelect = useCallback((id: string) => setSelectedId(id), []);
   const closeDetail = useCallback(() => setSelectedId(null), []);
 
-  const items = useMemo(() => q.data?.items ?? [], [q.data]);
+  const items = useMemo(() => q.data ?? [], [q.data]);
 
   // Trên màn nhỏ, bản đồ nền + lớp nổi là trải nghiệm tệ — mở thẳng chế độ Danh sách.
   // Chỉ áp một lần lúc xác định được viewport, sau đó tôn trọng thao tác của người dùng.
@@ -157,20 +149,6 @@ function AssetMapDashboard() {
           <p className="flex items-center gap-2 text-sm text-destructive">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             {getErrorMessage(q.error, "Không tải được danh sách tài sản")}
-          </p>
-        </div>
-      )}
-
-      {/* Danh mục vượt trần tải: bản đồ VÀ danh sách đều đang thiếu tài sản. Im lặng ở đây
-          là để người dùng hiểu sai danh mục của mình, nên phải nói rõ thiếu bao nhiêu. */}
-      {q.data?.truncated && (
-        <div className="map-panel absolute top-20 left-1/2 z-20 max-w-[min(420px,calc(100%-2.5rem))] -translate-x-1/2 px-4 py-3">
-          <p className="flex items-start gap-2 text-sm">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-            <span>
-              Đang hiển thị {items.length} trong tổng số {q.data.totalCount} tài sản.{" "}
-              {q.data.totalCount - items.length} tài sản còn lại chưa được tải lên bản đồ.
-            </span>
           </p>
         </div>
       )}
