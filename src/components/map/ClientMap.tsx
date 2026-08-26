@@ -21,7 +21,14 @@ export function ClientMap(props: ComponentProps<typeof LeafletMap>) {
     );
   }
   return (
-    <Suspense fallback={<div className="rounded-md border bg-muted animate-pulse" style={{ height: props.height ?? 400 }} />}>
+    <Suspense
+      fallback={
+        <div
+          className="rounded-md border bg-muted animate-pulse"
+          style={{ height: props.height ?? 400 }}
+        />
+      }
+    >
       <LeafletMap {...props} />
     </Suspense>
   );

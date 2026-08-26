@@ -37,7 +37,9 @@ function ProfilePage() {
         /* handled by interceptor */
       }
     })();
-  }, []);
+    // updateUser là useCallback(..., []) trong AuthContext nên định danh ổn định —
+    // khai đúng phụ thuộc không làm effect chạy lại, vẫn là nạp một lần lúc mount.
+  }, [updateUser]);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();

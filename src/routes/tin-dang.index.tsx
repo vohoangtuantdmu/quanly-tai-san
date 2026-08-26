@@ -23,10 +23,7 @@ import { MobileListSheet } from "@/components/public/MobileListSheet";
 import { PropertyMapClient } from "@/components/map/PropertyMapClient";
 import type { PropertyMapPoint } from "@/components/map/PropertyMap";
 import { LocationSearchPopover } from "@/components/public/LocationSearchPopover";
-import {
-  DemandSearchSheet,
-  type DemandSearchResult,
-} from "@/components/public/DemandSearchSheet";
+import { DemandSearchSheet, type DemandSearchResult } from "@/components/public/DemandSearchSheet";
 import { useGeolocationOnDemand, type LatLng } from "@/hooks/useGeolocationOnDemand";
 import { useViewportKind } from "@/hooks/useViewportKind";
 import { geocodeAddress } from "@/lib/geocode";
@@ -94,8 +91,12 @@ function PublicListingsPage() {
   // ---- Vị trí + bán kính tìm kiếm — chỉ xin quyền vị trí khi người dùng chủ động
   // bấm nút "Tìm quanh vị trí hiện tại", KHÔNG tự xin quyền khi vào trang. Mặc định
   // mở trang là xem toàn bộ tin đã duyệt, không lọc theo vị trí. ----
-  const { status: geoStatus, position: userLocation, requestId, request: requestGeolocation } =
-    useGeolocationOnDemand();
+  const {
+    status: geoStatus,
+    position: userLocation,
+    requestId,
+    request: requestGeolocation,
+  } = useGeolocationOnDemand();
   const [searchCenter, setSearchCenter] = useState<LatLng | null>(null);
   const [radiusMeters, setRadiusMeters] = useState<number | null>(null);
   const [showSearchAreaButton, setShowSearchAreaButton] = useState(false);
@@ -486,12 +487,7 @@ function PublicListingsPage() {
         onClear={clearMyLocationSearch}
       />
 
-      <Button
-        size="sm"
-        variant="outline"
-        className="h-8"
-        onClick={() => setDemandSheetOpen(true)}
-      >
+      <Button size="sm" variant="outline" className="h-8" onClick={() => setDemandSheetOpen(true)}>
         <Target className="h-3.5 w-3.5 mr-1.5" />
         Tìm theo nhu cầu
       </Button>

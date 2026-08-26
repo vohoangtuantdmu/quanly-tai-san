@@ -44,7 +44,9 @@ export function CurrencyInput({
         }}
         className="pr-10"
       />
-      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₫</span>
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+        ₫
+      </span>
     </div>
   );
 }

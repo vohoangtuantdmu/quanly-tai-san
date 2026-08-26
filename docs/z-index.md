@@ -26,21 +26,21 @@ bên dưới rồi mới chọn số.
 Tất cả các lớp dưới đây đều nằm ở **ROOT context** (portal ra `document.body`), nên các số
 này so sánh được trực tiếp với nhau.
 
-| z     | Lớp                        | Nguồn                                          |
-| ----- | -------------------------- | ---------------------------------------------- |
-| 0     | Container bản đồ (Leaflet) | `src/routes/ban-do.index.tsx`                  |
-| 10    | Panel thống kê nổi         | `MapStatPanels` trong `ban-do.index.tsx`       |
-| 20    | Báo lỗi / trạng thái rỗng  | `ban-do.index.tsx`                             |
-| 840   | Nền mờ làm nổi tài sản     | `.asset-spotlight` — `styles.css`              |
-| 845   | Vòng sáng quanh marker     | `.asset-selected-ring` — `styles.css`          |
-| 850   | Thẻ xem nhanh tài sản      | `.asset-quickcard` — `styles.css`              |
-| 870   | Thanh nổi trên cùng        | `ban-do.index.tsx`                             |
-| 875   | Panel chi tiết cột phải    | `ban-do.index.tsx`                             |
-| 880   | Overlay danh sách tài sản  | `AssetListOverlay.tsx`                         |
-| 900   | Thanh tab dưới đáy         | `BottomTabBar.tsx`                             |
-| 920   | Sheet tính năng            | `FeatureSheet.tsx`                             |
-| 950   | Sheet "Thêm"               | `MoreSheet.tsx`                                |
-| 1000  | Dialog chi tiết tài sản    | `AssetDetailDialog.tsx`                        |
+| z    | Lớp                        | Nguồn                                    |
+| ---- | -------------------------- | ---------------------------------------- |
+| 0    | Container bản đồ (Leaflet) | `src/routes/ban-do.index.tsx`            |
+| 10   | Panel thống kê nổi         | `MapStatPanels` trong `ban-do.index.tsx` |
+| 20   | Báo lỗi / trạng thái rỗng  | `ban-do.index.tsx`                       |
+| 840  | Nền mờ làm nổi tài sản     | `.asset-spotlight` — `styles.css`        |
+| 845  | Vòng sáng quanh marker     | `.asset-selected-ring` — `styles.css`    |
+| 850  | Thẻ xem nhanh tài sản      | `.asset-quickcard` — `styles.css`        |
+| 870  | Thanh nổi trên cùng        | `ban-do.index.tsx`                       |
+| 875  | Panel chi tiết cột phải    | `ban-do.index.tsx`                       |
+| 880  | Overlay danh sách tài sản  | `AssetListOverlay.tsx`                   |
+| 900  | Thanh tab dưới đáy         | `BottomTabBar.tsx`                       |
+| 920  | Sheet tính năng            | `FeatureSheet.tsx`                       |
+| 950  | Sheet "Thêm"               | `MoreSheet.tsx`                          |
+| 1000 | Dialog chi tiết tài sản    | `AssetDetailDialog.tsx`                  |
 
 Vì sao có khoảng trống lớn giữa 20 và 840: nhóm 840–850 phải nằm trên bản đồ nhưng **dưới**
 thanh nổi và thanh tab, để lúc thẻ xem nhanh đang mở người dùng vẫn tìm kiếm/chuyển tab

@@ -59,7 +59,6 @@ export function LocationSearchPopover({
 
   useLayoutEffect(() => {
     if (open) computePosition();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
